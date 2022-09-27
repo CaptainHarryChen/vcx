@@ -34,9 +34,9 @@ git clone https://gitee.com/pku-vcl/vcx.git
 
 我们的 Lab 需要一个支持 C++20 标准的编译器。推荐使用以下编译器：
 
-- Visual Studio 2019 以上版本
-- GCC 10 以上版本
-- XCode 13 以上版本
+- Visual Studio 2019 以上版本，推荐 Visual Studio 2022
+- GCC 10 以上版本，推荐 GCC 12
+- XCode 13 以上版本，推荐 XCode 14
 - Clang 13 以上版本
 
 建议使用最新版本的相应编译器。
@@ -67,8 +67,9 @@ git clone https://gitee.com/pku-vcl/vcx.git
     1. 安装 C/C++ 插件与 XMake 插件。
     2. 选中顶部的 View -> Command Palette... ，输入 XMake: ，选择 XMake: Update Intellisense。
     3. 选中顶部的 View -> Command Palette... ，输入 C/C++: ，选择 C/C++: Edit Configurations (UI)。
-    4. 拉到最下方，点开Advanced Settings，在 Compile Commands 一栏输入 ${workspaceFolder}/.vscode/compile_commands.json
-    5. 返回 cpp 文件，现在 VS Code 应该已经能提供智能提示等功能了。
+    4. 选中 C++ standard 项，修改设置为 C++20 。
+    5. 拉到最下方，点开Advanced Settings，在 Compile Commands 一栏输入 ${workspaceFolder}/.vscode/compile_commands.json
+    6. 返回 cpp 文件，现在 VS Code 应该已经能提供智能提示等功能了。
 
  -  *VS Code（命令行配置方案）：
     首先执行 `xmake project -k compile_commands ./.vscode`。
@@ -111,6 +112,10 @@ git clone https://gitee.com/pku-vcl/vcx.git
   ```
   xmake f --toolchain=gcc-11
   ```
+
+- Q. 我使用 Mac OS 系统，安装时报错 invalid Darwin version number: macos 12.3
+
+- A. 使用的 XCode 版本过低，将 XCode 更新到最新版本即可。
 
 ### 写在后面
 
