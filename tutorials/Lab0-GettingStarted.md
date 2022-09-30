@@ -36,7 +36,7 @@ git clone https://gitee.com/pku-vcl/vcx.git
 
 - Visual Studio 2019 以上版本，推荐 Visual Studio 2022
 - GCC 10 以上版本，推荐 GCC 12
-- XCode 13 以上版本，推荐 XCode 14
+- XCode 13 以上版本
 - Clang 13 以上版本
 
 建议使用最新版本的相应编译器。

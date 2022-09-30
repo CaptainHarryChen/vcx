@@ -60,6 +60,6 @@ namespace VCX::Engine {
         Internal::RunApp_Init(options);
         Internal::RunApp_Main(TApp());
         Internal::RunApp_Shutdown();
-        return EXIT_SUCCESS;
+        return 0;
     }
 }
