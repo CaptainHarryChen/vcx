@@ -1,8 +1,6 @@
 #include <algorithm>
 #include <array>
 
-#include <Windows.h>
-
 #include "Engine/loader.h"
 #include "Labs/1-Drawing2D/CaseSSAA.h"
 #include "Labs/1-Drawing2D/tasks.h"

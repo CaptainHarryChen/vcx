@@ -54,8 +54,11 @@ namespace VCX::Engine::GL {
         }
         
         scope_t Use() const {
+            auto ret = _fbo.Use();
             glViewport(0, 0, _size.first, _size.second);
-            return _fbo.Use();
+            glClearColor(0, 0, 0, 1);
+            glClear(GL_COLOR_BUFFER_BIT);
+            return ret;
         }
 
         template<std::size_t Idx = 0> UniqueTexture2D const & GetColorAttachment() const { return _colorAttachments[Idx]; }
