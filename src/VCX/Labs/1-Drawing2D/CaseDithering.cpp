@@ -105,7 +105,7 @@ namespace VCX::Labs::Drawing2D {
                 _task.Emplace([&input = _input]() {
                     Common::ImageRGB tex({ c_Size.first, c_Size.second });
                     DitheringErrorDiffuse(tex, input);
-                    return input;
+                    return tex;
                 });
                 break;
             default:
