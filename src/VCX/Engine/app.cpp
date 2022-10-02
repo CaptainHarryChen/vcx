@@ -2,7 +2,7 @@
 #include <cstdlib>
 
 #include <glad/glad.h>
-#include <glfw/glfw3.h>
+#include <GLFW/glfw3.h>
 #include <imgui.h>
 #include <spdlog/spdlog.h>
 #include <stb_image.h>
