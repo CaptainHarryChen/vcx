@@ -86,9 +86,10 @@ git clone https://gitee.com/pku-vcl/vcx.git
 - Q. 网络错误，无法安装软件包怎么办？
 
 - A. 有几种解决方法：
-  - 可运行xmake g --proxy_pac=github_mirror.lua将github.com重定向到hub.fastgit.xyz
   - 打开本地代理，使用命令行设置好环境变量HTTPS_PROXY="127.0.0.1:<port>"，之后在命令行中运行xmake
   - 可运行xmake g --pkg_searchdirs=<download-dir>并根据报错提示，手动下载软件包并重命名为指定名字
+  - 可运行xmake g --proxy_pac=github_mirror.lua将github.com重定向到hub.fastgit.xyz（现不建议使用）
+  - 注：运行上面命令如果不起作用，可运行xmake g -c命令复原
 
 - Q. 提示找不到编译器怎么办？
 
