@@ -57,15 +57,16 @@ namespace VCX::Labs::Drawing2D {
     void DitheringOrdered(
         ImageRGB &       output,
         ImageRGB const & input) {
-        int pos[9][2]={{1,1}, {1,0}, {2,1}, {1,2}, {0,2}, {2,0}, {2,2}, {0,1}};
+        int pos[10][2]={{-1,-1},{1,1}, {1,0}, {2,1}, {1,2}, {0,2}, {2,0}, {0,0}, {2,2}, {0,1}};
         for (std::size_t x = 0; x < input.GetSizeX(); ++x)
             for (std::size_t y = 0; y < input.GetSizeY(); ++y) {
                 glm::vec3 color = input[{ x, y }];
-                int t = color.r * 9;
+                int t = color.r * 10;
+                if(t == 10) t--;
                 for(int i=0;i<3;i++)
                     for(int j=0;j<3;j++)
                         output.SetAt({x*3+i,y*3+j}, {0,0,0});
-                for(int i=0;i<t;i++)
+                for(int i=1;i<=t;i++)
                     output.SetAt({x*3+pos[i][0],y*3+pos[i][1]},{1,1,1});
             }
     }
@@ -280,8 +281,8 @@ namespace VCX::Labs::Drawing2D {
                 for (int i = 0; i < rate; i++)
                     for (int j = 0; j < rate; j++)
                     {
-                        float tx = ix - kx / rate * ((rate - 1) / 2.0f + i);
-                        float ty = iy - ky / rate * ((rate - 1) / 2.0f + j);
+                        float tx = ix - kx / rate * ((rate - 1) / 2.0f - i);
+                        float ty = iy - ky / rate * ((rate - 1) / 2.0f - j);
                         tx = std::max(tx, 0.0f); tx = std::min(tx, input.GetSizeX() - 1.0f);
                         ty = std::max(ty, 0.0f); ty = std::min(ty, input.GetSizeY() - 1.0f);
                         color += input[{(std::size_t)floor(tx + 0.5), (std::size_t)floor(ty + 0.5)}] / (float)rate / float(rate);
