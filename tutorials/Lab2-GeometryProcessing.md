@@ -152,6 +152,7 @@ namespace VCX::Labs::GeometryProcessing {
 + `v.GetSideNeighbors()` ：如果是边界点，这个方法返回它邻居顶点中，其他两个边界点的索引
   + 在一个合法的网格中，一个边界点有且只有两个相邻顶点也是边界点
 + `v.GetNeighbors()` ：返回所有邻居顶点的索引
++ `v.GetFaces()` ：返回所有相邻的面
 
 对于 `DCEL::Triangle const * f` ：
 + `f->Indices(i)` ：返回第 `i` 个顶点的索引（`i`=0,1,2），这里的顶点顺序和初始化时传入的一致
