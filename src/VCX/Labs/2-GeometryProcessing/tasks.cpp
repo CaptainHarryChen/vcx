@@ -3,6 +3,7 @@
 #include <map>
 #include <set>
 #include <unordered_set>
+#include <unordered_map>
 
 #include <glm/gtc/matrix_inverse.hpp>
 #include <spdlog/spdlog.h>
@@ -17,6 +18,104 @@ namespace VCX::Labs::GeometryProcessing {
     /******************* 1. Mesh Subdivision *****************/
     void SubdivisionMesh(Engine::SurfaceMesh const & input, Engine::SurfaceMesh & output, std::uint32_t numIterations) {
         // your code here
+        // for(int i = 0; i < input.Positions.size(); i++)
+        // {
+        //     printf("(%f, %f, %f)\n",input.Positions[i].x,input.Positions[i].y,input.Positions[i].z);
+        // }
+        // for(int i = 0; i < input.Normals.size(); i++)
+        // {
+        //     printf("[%f, %f, %f]\n",input.Normals[i].x,input.Normals[i].y,input.Normals[i].z);
+        // }
+        // for(int i = 0; i < input.TexCoords.size(); i++)
+        // {
+        //     printf("(%f, %f)\n",input.TexCoords[i].x,input.TexCoords[i].y);
+        // }
+        // for(int i = 0; i < input.Indices.size(); i++)
+        // {
+        //     printf("[%u]\n",input.Indices[i]);
+        // }
+        Engine::SurfaceMesh tmp = input;
+        for(std::uint32_t iter = 0; iter < numIterations; iter++)
+        {
+            DCEL links;
+            links.AddFaces(tmp.Indices); // initialize
+            assert(links.IsValid());
+            std::size_t n = tmp.Positions.size();
+            std::size_t m = tmp.Indices.size();
+            std::vector<int> deg(n);
+            std::vector<glm::vec3> sum(n);
+            std::unordered_map<unsigned long long, int> ev_id;
+            for(std::size_t i = 0; i < n; i++)
+            {
+                sum[i] = {0, 0, 0};
+                deg[i] = 0;
+            }
+
+            for (DCEL::HalfEdge const * e : links.GetEdges())
+            {
+                if(ev_id.count(1LLU * e->From() * n + e->To())) // make sure not to repeat adding a vertex
+                    continue;
+                //printf("(%d, %d)\n", e->From(), e->To());
+                //printf("(%d, %d, %d)   (%d, %d, %d)\n", *e->Face()->Indices(0), *e->Face()->Indices(1), *e->Face()->Indices(2), *e->OppositeFace()->Indices(0), *e->OppositeFace()->Indices(1), *e->OppositeFace()->Indices(2));
+                glm::vec3 ev(0, 0, 0);
+                ev += tmp.Positions[e->From()] + tmp.Positions[e->To()];
+                assert(e->PairEdgeOr(NULL));
+                for(int i = 0; i < 3; i++)
+                {
+                    ev += tmp.Positions[*e->Face()->Indices(i)];
+                    ev += tmp.Positions[*e->OppositeFace()->Indices(i)];
+                }
+                ev /= 8.0f;   
+                deg[e->From()]++;
+                deg[e->To()]++;
+                sum[e->From()] += ev;
+                sum[e->To()] += ev;
+                tmp.Positions.push_back(ev);
+                ev_id[1LLU * e->From() * n + e->To()] = tmp.Positions.size() - 1;
+                ev_id[1LLU * e->To() * n + e->From()] = tmp.Positions.size() - 1;
+            }
+
+            float pi = acos(-1);
+            for(std::size_t i = 0; i < n; i++)
+            {
+                float alpha = deg[i] == 3 ? 3.0f / 16 : 3.0f / (8 * deg[i]);
+                tmp.Positions[i] = (1 - deg[i] * alpha) * tmp.Positions[i] + alpha * sum[i];
+            }
+
+            tmp.Indices.clear();
+            for(DCEL::Triangle const &f : links.GetFaces())
+            {
+                //printf("[%u %u %u]", *f.Indices(0), *f.Indices(1), *f.Indices(2));
+                //printf("(%u %u %u %u %u %u)\n", f.Edges(0)->From(), f.Edges(0)->To(), f.Edges(1)->From(), f.Edges(1)->To(), f.Edges(2)->From(), f.Edges(2)->To());
+                
+                int ev[3];
+                for(int i = 0; i < 3; i++)
+                {
+                    assert(ev_id.count(1LLU * f.Edges(i)->From() * n + f.Edges(i)->To()));
+                    ev[i] = ev_id[1LLU * f.Edges(i)->From() * n + f.Edges(i)->To()];
+                }
+                //printf("[%u %u %u]\n", ev[0], ev[1], ev[2]);
+
+                tmp.Indices.push_back(*f.Indices(0)); tmp.Indices.push_back(ev[2]); tmp.Indices.push_back(ev[1]);
+                tmp.Indices.push_back(*f.Indices(1)); tmp.Indices.push_back(ev[0]); tmp.Indices.push_back(ev[2]);
+                tmp.Indices.push_back(*f.Indices(2)); tmp.Indices.push_back(ev[1]); tmp.Indices.push_back(ev[0]);
+                tmp.Indices.push_back(ev[0]); tmp.Indices.push_back(ev[1]); tmp.Indices.push_back(ev[2]);
+            }
+
+            // for(int i = 0; i < tmp.Positions.size(); i++)
+            // {
+            //     printf("(%f, %f, %f)\n",tmp.Positions[i].x,tmp.Positions[i].y,tmp.Positions[i].z);
+            // }
+            // for(int i = 0; i < tmp.Indices.size(); i++)
+            // {
+            //     printf("[%u]\n",tmp.Indices[i]);
+            // }
+            // DCEL check;
+            // check.AddFaces(tmp.Indices); // initialize
+            // assert(check.IsValid());
+        }
+
+        output = tmp;
     }
 
     /******************* 2. Mesh Parameterization *****************/
