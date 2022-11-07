@@ -44,17 +44,17 @@ namespace VCX::Engine::GL {
     struct UniformTrait<type> : public MatrixUniformTrait<type, element, func> {};
 
     // clang-format off
-    DECLARE_SCALAR_UNIFORM_TRAIT(int       , glUniform1i);
-    DECLARE_SCALAR_UNIFORM_TRAIT(float     , glUniform1f);
-    DECLARE_VECTOR_UNIFORM_TRAIT(glm::vec2 , float, glUniform2fv);
-    DECLARE_VECTOR_UNIFORM_TRAIT(glm::vec3 , float, glUniform3fv);
-    DECLARE_VECTOR_UNIFORM_TRAIT(glm::vec4 , float, glUniform4fv);
-    DECLARE_VECTOR_UNIFORM_TRAIT(glm::ivec2, int  , glUniform2iv);
-    DECLARE_VECTOR_UNIFORM_TRAIT(glm::ivec3, int  , glUniform3iv);
-    DECLARE_VECTOR_UNIFORM_TRAIT(glm::ivec4, int  , glUniform4iv);
-    DECLARE_MATRIX_UNIFORM_TRAIT(glm::mat2 , float, glUniformMatrix2fv);
-    DECLARE_MATRIX_UNIFORM_TRAIT(glm::mat3 , float, glUniformMatrix3fv);
-    DECLARE_MATRIX_UNIFORM_TRAIT(glm::mat4 , float, glUniformMatrix4fv);
+    // DECLARE_SCALAR_UNIFORM_TRAIT(int       , glUniform1i);
+    // DECLARE_SCALAR_UNIFORM_TRAIT(float     , glUniform1f);
+    // DECLARE_VECTOR_UNIFORM_TRAIT(glm::vec2 , float, glUniform2fv);
+    // DECLARE_VECTOR_UNIFORM_TRAIT(glm::vec3 , float, glUniform3fv);
+    // DECLARE_VECTOR_UNIFORM_TRAIT(glm::vec4 , float, glUniform4fv);
+    // DECLARE_VECTOR_UNIFORM_TRAIT(glm::ivec2, int  , glUniform2iv);
+    // DECLARE_VECTOR_UNIFORM_TRAIT(glm::ivec3, int  , glUniform3iv);
+    // DECLARE_VECTOR_UNIFORM_TRAIT(glm::ivec4, int  , glUniform4iv);
+    // DECLARE_MATRIX_UNIFORM_TRAIT(glm::mat2 , float, glUniformMatrix2fv);
+    // DECLARE_MATRIX_UNIFORM_TRAIT(glm::mat3 , float, glUniformMatrix3fv);
+    // DECLARE_MATRIX_UNIFORM_TRAIT(glm::mat4 , float, glUniformMatrix4fv);
     // clang-format on
 
 #undef DECLARE_SCALAR_UNIFORM_TRAIT
