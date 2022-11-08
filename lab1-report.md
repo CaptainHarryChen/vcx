@@ -1,7 +1,5 @@
 # VCX-lab1 报告
 
-陈冲寒 2000012946
-
 ## 1. Dithering算法
 
 ##### （1）Uniform random
