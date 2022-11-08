@@ -49,3 +49,31 @@ $$
 
 在32位系统下，```std::size_t```为32位的，左移32位操作会出现溢出，导致hash出错，bug极难察觉。
 
+#### 效果
+
+![loop_subdivision_result](./report_image/loop_subdivision_3.png)
+
+### Task 2: Spring-Mass Mesh Parameterization
+
+根据算法推导，最终希望得到满足如下条件的顶点UV坐标 $t$. 且边界上的点在正方形$[0,1]^2$的边界上平均分配
+$$
+t_i=\sum_{j\in N_i}\lambda_{ij}t_j
+$$
+$N_i$为结点$i$的邻居集合；对于系数$\lambda_{ij}$，简单地选择$\lambda_{ij}=\frac 1 {|N_i|}$
+
+#### 实现思路
+
+首先通过```DCEL```，找到一个在边界上的顶点。通过```DCEL```，将整个边界上的一圈顶点按顺序存储在数组```side_v```中
+
+将```side_v```中的点分成4段，每一段将其材质UV均匀的放在正方形的一条边上
+
+迭代```numIterations```次，每次枚举所有顶点，通过以下公式更新该顶点的UV坐标
+$$
+t_i=\frac 1 {|N_i|}\sum_{j\in N_i}t_j
+$$
+经过许多次迭代，更新的幅度会越来越小，趋于稳定。
+
+#### 效果
+
+![Spring-Mass Mesh Parameterization](./report_image/spring_parameterization_1.png)
+
