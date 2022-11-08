@@ -121,6 +121,63 @@ namespace VCX::Labs::GeometryProcessing {
     /******************* 2. Mesh Parameterization *****************/
     void Parameterization(Engine::SurfaceMesh const & input, Engine::SurfaceMesh & output, const std::uint32_t numIterations) {
         // your code here
+        DCEL links;
+        links.AddFaces(input.Indices); // initialize
+        assert(links.IsValid());
+        std::size_t n = input.Positions.size();
+        int u = 0;
+        while(!links.GetVertex(u).IsSide())
+            u++;
+        std::vector<bool> vis(n);
+        for(std::size_t i = 0; i < n; i++)
+            vis[i] = false;
+        std::vector<int> side_v;
+        do
+        {
+            side_v.push_back(u);
+            vis[u] = true;
+            int v = -1;
+            std::pair<DCEL::VertexIdx, DCEL::VertexIdx> nxt = links.GetVertex(u).GetSideNeighbors();
+            if(!vis[nxt.first])
+                v = nxt.first;
+            if(!vis[nxt.second])
+                v = nxt.second;
+            u = v;
+        }while(u != -1);
+
+        output = input;
+        output.TexCoords.resize(n);
+        for(std::size_t i = 0; i < n; i++)
+            output.TexCoords[i] = {0.0f, 0.0f};
+        
+        int side_num = (side_v.size() + 3) / 4;
+        for(std::size_t i = 0; i < side_num; i++)
+            output.TexCoords[side_v[i]] = {1.0f * i / side_num, 0.0f};
+        for(std::size_t i = 0; i < side_num; i++)
+            output.TexCoords[side_v[i + side_num]] = {1.0f, 1.0f * i / side_num};
+        for(std::size_t i = 0; i < side_num; i++)
+            output.TexCoords[side_v[i + side_num * 2]] = {1.0f - 1.0f * i / side_num, 1.0f};
+        for(std::size_t i = 0; i + side_num * 3 < side_v.size(); i++)
+            output.TexCoords[side_v[i + side_num * 3]] = {0.0f, 1.0f - 1.0f * i / side_num};
+        
+        for(std::uint32_t iter = 0; iter < numIterations; iter++)
+        {
+            for(std::size_t i = 0; i < n; i++)
+            {
+                if(vis[i])
+                    continue;
+                auto neighbors = links.GetVertex(i).GetNeighbors();
+                glm::vec2 sum(0.0f, 0.0f);
+                for(DCEL::VertexIdx v : neighbors)
+                    sum += output.TexCoords[v];
+                sum /= 1.0f * neighbors.size();
+                output.TexCoords[i] = sum;
+            }
+        }
+        // for(int i = 0; i < output.TexCoords.size(); i++)
+        // {
+        //     printf("(%f, %f)\n", output.TexCoords[i].x, output.TexCoords[i].y);
+        // }
     }
 
     /******************* 3. Mesh Simplification *****************/
