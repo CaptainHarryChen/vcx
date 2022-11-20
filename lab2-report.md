@@ -1,6 +1,6 @@
-# VCX-lab2
+# VCX-lab2 报告
 
-### Task 1: Loop Mesh Subdivision
+## Task 1: Loop Mesh Subdivision
 
 该lab里仅针对封闭的三维几何体进行模型细分。
 
@@ -53,7 +53,7 @@ $$
 
 ![loop_subdivision_result](./report_image/loop_subdivision_3.png)
 
-### Task 2: Spring-Mass Mesh Parameterization
+## Task 2: Spring-Mass Mesh Parameterization
 
 根据算法推导，最终希望得到满足如下条件的顶点UV坐标 $t$. 且边界上的点在正方形$[0,1]^2$的边界上平均分配
 $$
@@ -77,3 +77,85 @@ $$
 
 ![Spring-Mass Mesh Parameterization](./report_image/spring_parameterization_1.png)
 
+## Task 3: Mesh Simplification
+
+使用Quadric Error Metric进行模型简化，根据要求，使用迭代的方式删点，没有在缩边后更新维护周围结点的Q值
+
+#### 实现过程
+
+1. **计算每一个点的Q矩阵：**
+
+   1. 通过DCEL枚举点相邻的面，计算面的法向量$n$, 在平面上任取一点$a$，将法向量齐次化$\bar n=(n,-n\cdot a)$，则$Q=n^{\top}n$, 为$4\times 4$的矩阵。
+   2. 将相邻的面Q矩阵相加得到点的Q矩阵
+
+2. **寻找合法的点对，并计算他们的误差值Quadric Error Metric：**
+
+   1. 首先必须定义合法的模型。
+
+      在该lab的代码中，认为一个合法的模型，每一条边最多同时存在于2个三角面上，仅在边界上存在于一个三角面。**（区别）**认为如果一个点连接了2个以上的边界边也视为合法。即下图中左为合法，右为非法（红色为同一条边的第三个三角形）
+
+      <img src="./report_image/mesh_simplification_1.png" alt="image-20221120152012810" style="zoom:50%;" /><img src="./report_image/mesh_simplification_2.png" alt="image-20221120152021780" style="zoom:50%;" />
+
+   2. 由此可以定义出可坍缩的点对：
+
+      对于点对$(u,v)$，若存在任意点$w$，使得边$(u,w),\ (v,w)$存在，且$(u,v,w)$不是网格模型上的三角面，则该点对不可坍缩，其余的均可坍缩。
+
+      下图显示了一个非法点对$(u,v)$和使其非法的点$w$
+
+      ![mesh_simplification_3](./report_image/mesh_simplification_3.png)
+
+      根据论文描述，点对除了满足以上条件，还要满足以下条件任意一条即为可坍缩的
+
+      1. $(u,v)$存在边
+      2. $||u-v||<t$，（即$u$和$v$距离小于某一个阈值）
+
+   3. 对于合法的点对，计算他们坍缩后的点$\bar v$位置，计算他们的误差值，使用论文中的公式计算
+      $$
+      \bar Q=Q_1+Q_2\\
+      Q=\left[\begin{matrix}
+      q_{11} & q_{12} & q_{13} & q_{14} \\
+      q_{21} & q_{22} & q_{23} & q_{24} \\
+      q_{31} & q_{32} & q_{33} & q_{34} \\
+      q_{41} & q_{42} & q_{43} & q_{44} \\
+      \end{matrix}\right]\\
+      \bar v=\left[\begin{matrix}
+      q_{11} & q_{12} & q_{13} & q_{14} \\
+      q_{21} & q_{22} & q_{23} & q_{24} \\
+      q_{31} & q_{32} & q_{33} & q_{34} \\
+      0&0&0&1 \\
+      \end{matrix}\right]^{-1}
+      \left[\begin{matrix}
+      0\\0\\0\\1
+      \end{matrix}\right]
+      $$
+      若上述矩阵不可逆，则直接选取$\bar v = (v_1+v_2)/2$
+
+      误差值$\text{error}=\bar v^{\top}Q\bar v$
+
+   4. 将上述点对以及他们的误差值放入最小优先队列中
+
+3. **从优先队列中取出点对坍缩，直到优先队列为空或剩余点数达到要求**
+
+   首先从优先队列中取出误差值最小的点对，判断该点对的两个点是否已经被删掉
+
+   如果没有被删掉，需要**再次**使用步骤2中的方法**判断该点对是否可坍缩**。因为在其他点被坍缩后，可能使得该点对不再合法。
+
+   坍缩u,v两个点，使用数组```delv```标记其被删除，在```mesh.Positions```中添加新点，使用```newid```数组记录u,v两个点坍缩后的新点编号。
+
+4. **重新构建所有三角面**
+
+   此时优先队列已经为空，或者剩余点数达到要求。
+
+   删除原来```mesh.Indices```数组，重新构建三角面。
+
+   通过DCEL枚举所有三角面，使用```newid```找到新的三角面的三个点，若三个点互不相同，则将这个新的三角面加入```mesh.Indices```
+
+5. **从```mesh.Positions```中删除已经被坍缩的点**
+
+   删除里面的点，并将后面的点前移，同步修改```mesh.Indices```中的编号。
+
+6. **若剩余点数不符合要求，重复步骤1~5**
+
+#### 效果
+
+![mesh_simplification_4](./report_image/mesh_simplification_4.png)
