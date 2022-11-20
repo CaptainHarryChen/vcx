@@ -163,7 +163,7 @@ $$
 
 ![mesh_simplification_4](./report_image/mesh_simplification_4.png)
 
-## Task 2: Mesh Smoothing
+## Task 4: Mesh Smoothing
 
 实现Laplacian smoothing, 分别使用Uniform weight和Cotangent Weight. 
 
