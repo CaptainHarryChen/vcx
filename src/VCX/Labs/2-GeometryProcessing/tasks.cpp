@@ -181,6 +181,7 @@ namespace VCX::Labs::GeometryProcessing {
         // }
     }
 
+    /******************* 3. Mesh Simplification *****************/
     struct ErrorVertexPair
     {
         float error;
@@ -225,7 +226,6 @@ namespace VCX::Labs::GeometryProcessing {
         return ret;
     }
 
-    /******************* 3. Mesh Simplification *****************/
     void SimplifyMesh(Engine::SurfaceMesh const & input, Engine::SurfaceMesh & output, float valid_pair_threshold, float simplification_ratio) {
         std::size_t origin_n = input.Positions.size();
         std::vector<glm::mat4> vertexQ;
@@ -431,7 +431,136 @@ namespace VCX::Labs::GeometryProcessing {
     }
 
     /******************* 5. Marching Cubes *****************/
+    glm::vec3 weightMidPoint(glm::vec3 u, glm::vec3 v, float w1, float w2)
+    {
+        // return (u + v) / 2.0f;    // if you want Sci-fi style, use this ~~~///(^v^)\\\~~~
+        float sum = w1 - w2;
+        return (- w2 * u + w1 * v) / sum;
+    }
+    
     void MarchingCubes(Engine::SurfaceMesh & output, const std::function<float(const glm::vec3 &)> & sdf, const glm::vec3 & grid_min, const float dx, const int n) {
-        // your code here
+        std::vector<std::vector<std::vector<std::vector<int> > > > v_id;
+        v_id.resize(n);
+        for(int i = 0; i < n; i++)
+        {
+            v_id[i].resize(n);
+            for(int j = 0; j < n; j++)
+            {
+                v_id[i][j].resize(n);
+                for(int k = 0; k < n; k++)
+                {
+                    v_id[i][j][k].resize(12);
+                    for(int l = 0; l < 12; l++)
+                        v_id[i][j][k][l]=-1;
+                }
+            }
+        }
+        for(int i = 0; i < n; i++)
+            for(int j = 0; j < n; j++)
+                for(int k = 0; k < n; k++)
+                {
+                    int state = 0;
+                    glm::vec3 cube_pos = {i * dx, j * dx, k * dx};
+                    cube_pos += grid_min;
+                    glm::vec3 v[8];
+                    for(int l = 0; l < 8; l++)
+                    {
+                        v[l] = {(l&1)*dx, (l>>1&1)*dx, (l>>2&1)*dx};
+                        v[l] += cube_pos;
+                        if(sdf(v[l]) < 0.0f)
+                            state |= (1<<l);
+                    }
+                    int estate = c_EdgeStateTable[state];
+                    for(int l = 0; l < 12; l++)
+                        if(estate&(1<<l))
+                        {
+                            int &id = v_id[i][j][k][l];
+                            glm::vec3 newv;
+                            id = -1;
+                            switch(l)
+                            {
+                            case 0:
+                                if(k>0)
+                                    id = v_id[i][j][k-1][2];
+                                else if(j>0)
+                                    id = v_id[i][j-1][k][1];
+                                else
+                                    newv = weightMidPoint(v[0], v[1], sdf(v[0]), sdf(v[1]));
+                                break;
+                            case 1:
+                                if(k>0)
+                                    id = v_id[i][j][k-1][3];
+                                else
+                                    newv = weightMidPoint(v[2], v[3], sdf(v[2]), sdf(v[3]));
+                                break;
+                            case 2:
+                                if(j>0)
+                                    id = v_id[i][j-1][k][3];
+                                else
+                                    newv = weightMidPoint(v[4], v[5], sdf(v[4]), sdf(v[5]));
+                                break;
+                            case 3:
+                                newv = weightMidPoint(v[6], v[7], sdf(v[6]), sdf(v[7]));
+                                break;
+                            case 4:
+                                if(k>0)
+                                    id = v_id[i][j][k-1][5];
+                                else if(i>0)
+                                    id = v_id[i-1][j][k][6];
+                                else
+                                    newv = weightMidPoint(v[0], v[2], sdf(v[0]), sdf(v[2]));
+                                break;
+                            case 5:
+                                if(i>0)
+                                    id = v_id[i-1][j][k][7];
+                                else
+                                    newv = weightMidPoint(v[4], v[6], sdf(v[4]), sdf(v[6]));
+                                break;
+                            case 6:
+                                if(k>0)
+                                    id = v_id[i][j][k-1][7];
+                                else
+                                    newv = weightMidPoint(v[1], v[3], sdf(v[1]), sdf(v[3]));
+                                break;
+                            case 7:
+                                newv = weightMidPoint(v[5], v[7], sdf(v[5]), sdf(v[7]));
+                                break;
+                            case 8:
+                                if(j>0)
+                                    id = v_id[i][j-1][k][10];
+                                else if(i>0)
+                                    id = v_id[i-1][j][k][9];
+                                else
+                                    newv = weightMidPoint(v[0], v[4], sdf(v[0]), sdf(v[4]));
+                                break;
+                            case 9:
+                                if(j>0)
+                                    id = v_id[i][j-1][k][11];
+                                else
+                                    newv = weightMidPoint(v[1], v[5], sdf(v[1]), sdf(v[5]));
+                                break;
+                            case 10:
+                                if(i>0)
+                                    id = v_id[i-1][j][k][11];
+                                else
+                                    newv = weightMidPoint(v[2], v[6], sdf(v[2]), sdf(v[6]));
+                                break;
+                            case 11:
+                                newv = weightMidPoint(v[3], v[7], sdf(v[3]), sdf(v[7]));
+                                break;
+                            }
+                            if(id == -1)
+                            {
+                                id = output.Positions.size();
+                                output.Positions.push_back(newv);
+                            }
+                        }
+                    for(int l = 0; l < 12; l++)
+                    {
+                        if(c_EdgeOrdsTable[state][l] == -1)
+                            break;
+                        output.Indices.push_back(v_id[i][j][k][c_EdgeOrdsTable[state][l]]);
+                    }
+                }
     }
 } // namespace VCX::Labs::GeometryProcessing
