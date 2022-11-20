@@ -2,6 +2,7 @@
 #include <list>
 #include <map>
 #include <set>
+#include <queue>
 #include <unordered_set>
 #include <unordered_map>
 
@@ -180,9 +181,216 @@ namespace VCX::Labs::GeometryProcessing {
         // }
     }
 
+    struct ErrorVertexPair
+    {
+        float error;
+        std::size_t u, v;
+        DCEL::HalfEdge const *e;
+        glm::vec3 newv;
+        bool operator < (const ErrorVertexPair &t) const {
+            return error < t.error;
+        }
+        bool operator > (const ErrorVertexPair &t) const {
+            return error > t.error;
+        }
+    };
+
+    ErrorVertexPair NewQuadricError(std::size_t uid, std::size_t vid, const glm::vec3 &u, const glm::vec3 &v, const glm::mat4 &uQ, const glm::mat4 &vQ, DCEL::HalfEdge const *e)
+    {
+        ErrorVertexPair ret;
+        glm::vec4 newv;
+        ret.u = uid; ret.v = vid;
+        ret.e = e;
+        glm::mat4 eQ = uQ + vQ;
+        glm::mat4 dQ = eQ;
+        dQ[3][0] = dQ[3][1] = dQ[3][2] = 0; dQ[3][3] = 1;
+        if(abs(glm::determinant(dQ)) > 0.1)
+        {
+            glm::mat4 inv = glm::inverse(dQ);
+            // newv = inv * glm::vec4(0, 0, 0, 1);
+            newv = {inv[0][3], inv[1][3], inv[2][3], inv[3][3]};
+            newv /= newv[3];
+        }
+        else
+        {
+            glm::vec3 mid = u + v;
+            mid /= 2.0f;
+            newv = {mid.x, mid.y, mid.z, 1};
+        }
+        ret.newv = {newv[0], newv[1], newv[2]};
+        ret.error = 0.0f;
+        for(int i = 0; i < 4; i++)
+            for(int j = 0; j < 4; j++)
+                ret.error += newv[i] * eQ[i][j] * newv[j];
+        return ret;
+    }
+
     /******************* 3. Mesh Simplification *****************/
     void SimplifyMesh(Engine::SurfaceMesh const & input, Engine::SurfaceMesh & output, float valid_pair_threshold, float simplification_ratio) {
-        // your code here
+        std::size_t origin_n = input.Positions.size();
+        std::vector<glm::mat4> vertexQ;
+        std::vector<bool> delv;
+        std::vector<std::size_t> newid;
+        std::vector<std::size_t> del_id;
+        std::priority_queue< ErrorVertexPair, std::vector<ErrorVertexPair>, std::greater<ErrorVertexPair> > valid_pairs;
+        Engine::SurfaceMesh mesh = input;
+        std::size_t cur_n = mesh.Positions.size();
+        
+        while(cur_n > origin_n * simplification_ratio)
+        {
+            DCEL links;
+            links.AddFaces(mesh.Indices);
+            assert(links.IsValid());
+            
+            // calculate the initial Q of vertexes
+            vertexQ.clear();
+            for(std::size_t i = 0; i < mesh.Positions.size(); i++)
+            {
+                glm::mat4 vQ(0);
+                for(DCEL::Triangle const *f : links.GetVertex(i).GetFaces())
+                {
+                    glm::vec3 a = mesh.Positions[*f->Indices(0)], b = mesh.Positions[*f->Indices(1)], c = mesh.Positions[*f->Indices(2)];
+                    glm::vec3 normal = glm::normalize(glm::cross(a - b, c - b));
+                    glm::vec4 ni(normal.x, normal.y, normal.z, - glm::dot(normal, a));
+                    glm::mat4 fQ;
+                    for(int i = 0; i < 4; i++)
+                        for(int j = 0; j < 4; j++)
+                            fQ[i][j] = ni[i] * ni[j];
+                    vQ += fQ;
+                }
+                vertexQ.push_back(vQ);
+            }
+
+            // find valid pairs
+            for(std::size_t i = 0; i < cur_n; i++)
+                for(std::size_t j = i + 1; j < cur_n; j++)
+                    if((mesh.Positions[i] - mesh.Positions[j]).length() < valid_pair_threshold)
+                    {
+                        // if there is a neighbor k with both i and j, this pair is illegal
+                        bool legal = true;
+                        auto ni = links.GetVertex(i).GetNeighbors();
+                        std::sort(ni.begin(), ni.end());
+                        auto nj = links.GetVertex(j).GetNeighbors();
+                        for(auto t: nj)
+                            if(std::find(ni.begin(), ni.end(), t) != ni.end())
+                            {
+                                legal = false;
+                                break;
+                            }
+                        if(legal)
+                            valid_pairs.push(NewQuadricError(i, j, mesh.Positions[i], mesh.Positions[j], vertexQ[i], vertexQ[j], NULL));
+                    }
+            for(DCEL::HalfEdge const *e : links.GetEdges())
+            {
+                int i = e->From(), j = e->To();
+                // if there is a neighbor k with both i and j, and ijk is not a face of the mesh, then the pair is illegal
+                bool legal = true;
+                auto ni = links.GetVertex(i).GetNeighbors();
+                std::sort(ni.begin(), ni.end());
+                auto nj = links.GetVertex(j).GetNeighbors();
+                for(auto t: nj)
+                    if(std::find(ni.begin(), ni.end(), t) != ni.end())
+                        if(t != e->OppositeVertex() && t != e->PairOppositeVertex())
+                        {
+                            legal = false;
+                            break;
+                        }
+                if(legal)
+                    valid_pairs.push(NewQuadricError(i, j, mesh.Positions[i], mesh.Positions[j], vertexQ[i], vertexQ[j], e));
+            }
+            // delete old vertex pair and add new vertex
+            delv.clear();
+            delv.resize(cur_n);
+            newid.clear();
+            newid.resize(cur_n);
+            std::size_t rest_num = cur_n;
+            while(rest_num > cur_n * simplification_ratio && !valid_pairs.empty())
+            {
+                ErrorVertexPair evp;
+                do
+                {
+                    evp = valid_pairs.top();
+                    valid_pairs.pop();
+                    if(delv[evp.u] || delv[evp.v])
+                        continue;
+                    // check if the vertex pair is collapse legal
+                    int i = evp.u, j = evp.v;
+                    bool legal = true;
+                    auto ni = links.GetVertex(i).GetNeighbors();
+                    for(int x = 0; x < ni.size(); x++)
+                        ni[x] = delv[ni[x]] ? newid[ni[x]] : ni[x];
+                    std::sort(ni.begin(), ni.end());
+                    auto nj = links.GetVertex(j).GetNeighbors();
+                    for(int x = 0; x < nj.size(); x++)
+                        nj[x] = delv[nj[x]] ? newid[nj[x]] : nj[x];
+                    for(auto t: nj)
+                        if(std::find(ni.begin(), ni.end(), t) != ni.end())
+                        {
+                            if(evp.e)
+                            {
+                                std::size_t facev1 = evp.e->OppositeVertex(), facev2 = evp.e->PairOppositeVertex();
+                                facev1 = delv[facev1] ? newid[facev1] : facev1;
+                                facev2 = delv[facev2] ? newid[facev2] : facev2;
+                                if(t != facev1 && t != facev2)
+                                {
+                                    legal = false;
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                legal = false;
+                                break;
+                            }
+                        }
+                    if(legal)
+                       break; 
+                }while(!valid_pairs.empty());
+                if(delv[evp.u] || delv[evp.v])
+                    break;
+                delv[evp.u] = delv[evp.v] = true;
+                mesh.Positions.push_back(evp.newv);
+                newid[evp.u] = newid[evp.v] = mesh.Positions.size() - 1;
+                rest_num--;
+            }
+            // reconstruct all the faces
+            mesh.Indices.clear();
+            for(DCEL::Triangle const &f : links.GetFaces())
+            {
+                std::size_t ind[3];
+                for(int i = 0; i < 3; i++)
+                {
+                    if(delv[*f.Indices(i)])
+                        ind[i] = newid[*f.Indices(i)];
+                    else
+                        ind[i] = *f.Indices(i);
+                }
+                if(ind[0] != ind[1] && ind[0] != ind[2] && ind[1] != ind[2])
+                {
+                    for(int i = 0; i < 3; i++)
+                        mesh.Indices.push_back(ind[i]);
+                }
+            }
+            // delete the vertex from the mesh.Positions
+            del_id.clear();
+            del_id.resize(mesh.Positions.size());
+            for(std::size_t i = 0, j = 0; i < mesh.Positions.size(); i++)
+                if(i >= delv.size() || !delv[i])
+                {
+                    del_id[i] = j;
+                    mesh.Positions[j] = mesh.Positions[i];
+                    j++;
+                }
+            mesh.Positions.resize(rest_num);
+            for(std::size_t i = 0; i < mesh.Indices.size(); i++)
+                mesh.Indices[i] = del_id[mesh.Indices[i]];
+            
+            cur_n = rest_num;
+        }
+        
+        if(cur_n > origin_n * simplification_ratio)
+            printf("Unfinished!!!!\n");
+        output = mesh;
     }
 
     /******************* 4. Mesh Smoothing *****************/
