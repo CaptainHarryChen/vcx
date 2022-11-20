@@ -191,3 +191,32 @@ $$
 
 ![mesh_smoothing_1](./report_image/mesh_smoothing_1.png)
 
+## Task 5: Marching Cube
+
+使用Marching Cube算法实现隐式表面重建（附彩蛋）
+
+#### 实现过程
+
+枚举$n\times n\times n$的每一个正方体，对其每一个点使用```sdf```函数计算它到隐式表面的距离，以及它在表面内部还是外部。
+
+根据结点在内外的状态，对正方体生成二进制状态```state```
+
+通过```c_EdgeStateTable```查到正方体中，哪几条边需要生成顶点。
+
+为了确保相邻的正方体，在共用边上生成的结点不重复，定义数组```v_id[n][n][n][12]```表示每个正方体上，每条边的生成的结点编号（若没有结点则为1）
+
+对正在计算的正方体，每一种边分别判断，如果其存在已经处理过的正方体与之共用边，则将```v_id```标记为处理过的正方体上的```v_id```；否则新建顶点
+
+新建顶点时，根据该边两端顶点到隐式平面的距离比例，在该边上对应比例位置生成结点。
+
+结点生成完毕后，读取```c_EdgeOrdsTable```把三角平面的信息放入```output.Indices```
+
+#### 效果
+
+![marching_cube](./report_image/marching_cube.png)
+
+
+
+
+
+彩蛋：生成结点不使用比例生成，直接用中点，可以实现科幻效果(^v^)<img src="./report_image/marching_cube_scifi.png" alt="marching_cube_scifi" style="zoom:20%;" />
