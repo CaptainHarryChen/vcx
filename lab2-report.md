@@ -125,7 +125,10 @@ $$
       0&0&0&1 \\
       \end{matrix}\right]^{-1}
       \left[\begin{matrix}
-      0\\0\\0\\1
+      0\\
+      0\\
+      0\\
+      1
       \end{matrix}\right]
       $$
       若上述矩阵不可逆，则直接选取$\bar v = (v_1+v_2)/2$
@@ -159,3 +162,32 @@ $$
 #### 效果
 
 ![mesh_simplification_4](./report_image/mesh_simplification_4.png)
+
+## Task 2: Mesh Smoothing
+
+实现Laplacian smoothing, 分别使用Uniform weight和Cotangent Weight. 
+
+#### 实现过程
+
+算法过程中需要枚举某个点的邻居顶点，并且获取他们的边信息。但由于该lab中没有提供访问某顶点的邻接边的API，使用另一种实现方式。
+
+使用一个数组```newv```维护每个点对应新节点的加权坐标和，```weight```维护权重和
+
+使用DCEL枚举模型中每一条边，计算该边的权重，若使用Uniform，则权重为1.
+
+ 若使用Cotangent，则通过DCEL访问该边所在两个面的对点u1, u2，用以下公式计算一个对点的cot值
+$$
+|\cot \theta| = \left|\frac {(u-v_1)\cdot(u-v_2)} {||(u-v_1)\cross (u-v_2)||}\right|
+$$
+将两个对点的cot值绝对值相加，得到该边的权重w
+
+将该边的权重和两个点的带权坐标加到对应的数组上去。
+
+最后，枚举每个点，$\bar v_i=v_i(1-\lambda)+\lambda\ \text{newv}[i]/\text{weight}[i]$
+
+重复迭代以上步骤
+
+#### 效果
+
+![mesh_smoothing_1](./report_image/mesh_smoothing_1.png)
+
