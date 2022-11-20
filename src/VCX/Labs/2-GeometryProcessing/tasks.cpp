@@ -388,14 +388,46 @@ namespace VCX::Labs::GeometryProcessing {
             cur_n = rest_num;
         }
         
-        if(cur_n > origin_n * simplification_ratio)
-            printf("Unfinished!!!!\n");
         output = mesh;
     }
 
     /******************* 4. Mesh Smoothing *****************/
     void SmoothMesh(Engine::SurfaceMesh const & input, Engine::SurfaceMesh & output, std::uint32_t numIterations, float lambda, bool useUniformWeight) {
         // your code here
+        std::vector<glm::vec3> newv;
+        std::vector<float> weight;
+        Engine::SurfaceMesh mesh = input;
+        DCEL links;
+        links.AddFaces(mesh.Indices);
+        assert(links.IsValid());
+        for(std::uint32_t iter = 0; iter < numIterations; iter++)
+        {
+            newv.clear();
+            newv.resize(mesh.Positions.size());
+            weight.clear();
+            weight.resize(mesh.Positions.size());
+            for(auto e: links.GetEdges())
+            {
+                std::size_t v1_id = e->From(), v2_id = e->To();
+                glm::vec3 v1 = mesh.Positions[v1_id], v2 = mesh.Positions[v2_id];
+                float w = 1;
+                if(!useUniformWeight)
+                {
+                    std::size_t u1_id = e->OppositeVertex(), u2_id = e->PairOppositeVertex();
+                    glm::vec3 u1 = mesh.Positions[u1_id], u2 = mesh.Positions[u2_id];
+                    float alpha = abs(glm::dot(u1 - v1, u1 - v2) / glm::cross(u1 - v1, u1 - v2).length());
+                    float beta = abs(glm::dot(u2 - v1, u2 - v2) / glm::cross(u2 - v1, u2 - v2).length());
+                    w = alpha + beta;
+                }
+                newv[v1_id] += v2 * w;
+                weight[v1_id] += w;
+                newv[v2_id] += v1 * w;
+                weight[v2_id] += w;
+            }
+            for(std::size_t i = 0; i < mesh.Positions.size(); i++)
+                mesh.Positions[i] = mesh.Positions[i] * (1 - lambda) + newv[i] / weight[i] * lambda;
+        }
+        output = mesh;
     }
 
     /******************* 5. Marching Cubes *****************/
