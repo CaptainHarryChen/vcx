@@ -1,0 +1,18 @@
+Reflection: Empirical
+AmbientIntensity: [0.05, 0.05, 0.05]
+
+Cameras:
+  - Eye: [-12, -12, 0]
+    Target: [0, -12, 0]
+    Up: [0, 1, 0]
+    Fovy: 45
+    ZNear: 0.15
+    ZFar: 150
+
+Lights:
+  - Type: Directional
+    Direction: [1, 1, 1]
+    Intensity: [1, 1, 1]
+
+ComplexModels:
+  - Mesh: sibenik.obj

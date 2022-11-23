@@ -1,0 +1,42 @@
+Reflection: Empirical
+AmbientIntensity: [0.05, 0.05, 0.05]
+
+Cameras:
+  - Eye: [278, 273, -800]
+    Target: [278, 273, 0]
+    Up: [0, 1, 0]
+    Fovy: 39.3076481
+    ZNear: 10
+    ZFar: 10000
+
+Lights:
+  - Type: Point
+    Position: [278, 520, 279.5]
+    Intensity: [100000, 100000, 100000]
+
+Materials:
+  - Name: wall
+    Blend: Opaque
+    Diffuse: [.4, .4, .4]
+  - Name: left
+    Blend: Opaque
+    Diffuse: [.5, .0, .0]
+  - Name: right
+    Blend: Opaque
+    Diffuse: [.0, .5, .0]
+  - Name: box
+    Blend: Opaque
+    Diffuse: [.5, .5, .5]
+    Specular: [.4, .4, .4, 32.]
+
+Models:
+  - Mesh: wall.obj
+    Material: wall
+  - Mesh: left.obj
+    Material: left
+  - Mesh: right.obj
+    Material: right
+  - Mesh: tall_block.obj
+    Material: box
+  - Mesh: short_block.obj
+    Material: box

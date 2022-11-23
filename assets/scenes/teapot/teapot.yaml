@@ -1,0 +1,28 @@
+Reflection: Empirical
+AmbientIntensity: [0.05, 0.05, 0.05]
+Skyboxes:
+  - ["right.jpg", "left.jpg", "top.jpg", "bottom.jpg", "front.jpg", "back.jpg"]
+
+Cameras:
+  - Eye: [0, 0, -80]
+    Target: [0, 0, 0]
+    Up: [0, 1, 0]
+    Fovy: 45
+    ZNear: 1
+    ZFar: 1000
+
+Lights:
+  - Type: Directional
+    Direction: [-1, 1, -1]
+    Intensity: [1, 1, 1]
+
+Materials:
+  - Name: teapot
+    Blend: Opaque
+    Diffuse: [0.7, 0.7, 0.7]
+    Specular: [0.25, 0.25, 0.25]
+    Shininess: 64
+
+Models:
+  - Mesh: teapot.obj
+    Material: teapot

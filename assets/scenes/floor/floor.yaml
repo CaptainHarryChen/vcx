@@ -1,0 +1,26 @@
+Reflection: Empirical
+AmbientIntensity: [0.05, 0.05, 0.05]
+
+Cameras:
+  - Eye: [0, 2, 4]
+    Target: [0, 0, 0]
+    Up: [0, 1, 0]
+    Fovy: 45
+    ZNear: 0.1
+    ZFar: 100
+
+Lights:
+  - Type: Point
+    Position: [0, 0, 0]
+    Intensity: [1, 1, 1]
+
+Materials:
+  - Name: wood
+    Blend: Opaque
+    DiffuseMap: wood.png
+    Specular: [.3, .3, .3]
+    Shininess: 32
+
+Models:
+  - Mesh: floor.obj
+    Material: wood

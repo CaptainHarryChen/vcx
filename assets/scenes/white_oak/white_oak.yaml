@@ -1,0 +1,21 @@
+Reflection: Empirical
+AmbientIntensity: [0.05, 0.05, 0.05]
+
+Cameras:
+  - Eye: [0, 500, 1100]
+    Target: [0, 300, 0]
+    Up: [0, 1, 0]
+    Fovy: 45
+    ZNear: 8
+    ZFar: 8000
+
+Lights:
+  - Type: Directional
+    Direction: [1, 1, 1]
+    Intensity: [1, 1, 1]
+#   - Type: Point
+#     Position: [500, 1000, 500]
+#     Intensity: [2e6, 2e6, 2e6]
+
+ComplexModels:
+  - Mesh: white_oak.obj

@@ -1,0 +1,18 @@
+Reflection: Empirical
+AmbientIntensity: [0.05, 0.05, 0.05]
+
+Cameras:
+  - Eye: [0, 2, 9.8]
+    Target: [0, 2, 0]
+    Up: [0, 1, 0]
+    Fovy: 45
+    ZNear: 0.15
+    ZFar: 150
+
+Lights:
+  - Type: Directional
+    Direction: [2, 1, .8]
+    Intensity: [2, 2, 1.5]
+
+ComplexModels:
+  - Mesh: breakfast_room.obj

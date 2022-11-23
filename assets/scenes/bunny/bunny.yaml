@@ -1,0 +1,29 @@
+Reflection: Empirical
+AmbientIntensity: [0.05, 0.05, 0.05]
+Skyboxes:
+  - ["rt.jpg", "lt.jpg", "up.jpg", "dn.jpg", "ft.jpg", "bk.jpg"]
+
+Cameras:
+  - Eye: [0, 0, 4]
+    Target: [0, 0, 0]
+    Up: [0, 1, 0]
+    Fovy: 45
+    ZNear: 0.1
+    ZFar: 100
+
+Lights:
+  - Type: Directional
+    Direction: [1, 1, 1]
+    Intensity: [1, 1, 1]
+
+Materials:
+  - Name: bunny
+    Blend: Opaque
+    Diffuse: [.5, .5, .5]
+    Specular: [.4, .4, .4, 32.]
+
+Models:
+  - Mesh: bunny.obj
+    Scale: [10, 10, 10]
+    Translation: [0.1, -1, 0]
+    Material: bunny
