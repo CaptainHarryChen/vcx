@@ -24,7 +24,11 @@
 
 在Phong模型的基础上有Blinn-Phong模型的改进，主要区别在于镜面反射高光的计算，Blinn-Phong的高光会更柔和。请参考[知乎](https://zhuanlan.zhihu.com/p/352209183)、[Wikipedia](https://en.wikipedia.org/wiki/Blinn%E2%80%93Phong_reflection_model)学习Blinn-Phong模型。在我们的shader代码中，全局变量 `u_UseBlinn` 控制光照模型的选择，当为 `true` 时 `shade()` 应返回 Blinn-Phong 模型的着色结果，否则应返回 Phong 模型的着色结果。
 
-完成 Phong/Blinn-Phong 光照模型并撰写报告即可获得本任务的全部分数（标答只有三行代码）。算法实现的结果如下（这是 cornell box 场景的渲染图）：
+完成 Phong/Blinn-Phong 光照模型并撰写报告即可获得本任务的全部分数（标答只有三行代码）。Phong 光照算法实现的结果如下：
+
+![](images/phong.png)
+
+Blinn-Phong 光照算法实现的结果如下：
 
 ![](images/blinn-phong.png)
 
