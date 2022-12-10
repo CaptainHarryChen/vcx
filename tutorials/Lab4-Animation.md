@@ -61,4 +61,26 @@
 `task.cpp` 中已经实现了一个显式 Euler 的弹簧质点系统。该方法的稳定性很差。为了达到稳定实时模拟的要求，你需要将它改写为隐式 Euler。最终实现的单帧效果如下（一面在重力作用下飘动的布料）：
 ![](images/mass_spring.png)
 
-Hint: 可使用 Eigen 库进行稀疏线性系统求解。参考 https://eigen.tuxfamily.org/dox/group__Sparse__chapter.html
+Hint: 可使用 Eigen 库进行稀疏线性系统求解。参考 https://eigen.tuxfamily.org/dox/group__Sparse__chapter.html。这里我们给出一个示例如何使用 Eigen 构造和求解稀疏矩阵。
+
+```C++
+// create a n*n sparse matrix
+Eigen::SparseMatrix<float> M(n, n);
+// a triplet (r, c, v) represents a non-zero value in sparse matrix, i.e. M(r, c) = v
+// there can be duplicate pairs of row and column in the vector, like (r, c, v1), (r, c, v2), which means M(r, c) = v1 + v2
+// for details, see: https://eigen.tuxfamily.org/dox/classEigen_1_1SparseMatrix.html#a8f09e3597f37aa8861599260af6a53e0
+std::vector<Eigen::Triplet<float>> coefficients;
+// fill in the coefficients vector
+// some code here...
+
+// set up sparse matrix M from triplet vector
+M.setFromTriplets(coefficients.begin(), coefficients.end());
+// create right-hand-side of your equation
+Eigen::VectorXf b = Eigen::VectorXf::Zero(n);
+// fill in the rhs vector b
+// some code here...
+
+// create solver, and solve equation
+auto solver = Eigen::SimplicialLLT<Eigen::SparseMatrix<float>>(M);
+Eigen::VectorXf x = solver.solve(b);
+```
