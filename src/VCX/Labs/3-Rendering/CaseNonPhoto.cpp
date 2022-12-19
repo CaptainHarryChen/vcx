@@ -78,6 +78,7 @@ namespace VCX::Labs::Rendering {
 
         gl_using(_frame);
 
+        glEnable(GL_DEPTH_TEST);
         glCullFace(GL_FRONT);
         glEnable(GL_CULL_FACE);
         for (auto const & model : _sceneObject.OpaqueModels) {
@@ -85,7 +86,7 @@ namespace VCX::Labs::Rendering {
             model.Mesh.Draw({ _backLineProgram.Use() });
         }
         glCullFace(GL_BACK);
-        glEnable(GL_DEPTH_TEST);
+        
 
         for (auto const & model : _sceneObject.OpaqueModels) {
             auto const & material = _sceneObject.Materials[model.MaterialIndex];

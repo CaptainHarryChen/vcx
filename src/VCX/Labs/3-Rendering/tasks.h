@@ -4,7 +4,9 @@
 #include <spdlog/spdlog.h>
 
 #include "Engine/Scene.h"
+#include "Labs/3-Rendering/intersect.h"
 #include "Labs/3-Rendering/Ray.h"
+#include "Labs/3-Rendering/BVH.h"
 
 namespace VCX::Labs::Rendering {
 
@@ -15,12 +17,6 @@ namespace VCX::Labs::Rendering {
     glm::vec4 GetTexture(Engine::Texture2D<Engine::Formats::RGBA8> const & texture, glm::vec2 const & uvCoord);
 
     glm::vec4 GetAlbedo(Engine::Material const & material, glm::vec2 const & uvCoord);
-
-    struct Intersection {
-        float t, u, v; // ray parameter t, barycentric coordinates (u, v)
-    };
-
-    bool IntersectTriangle(Intersection & output, Ray const & ray, glm::vec3 const & p1, glm::vec3 const & p2, glm::vec3 const & p3);
 
     struct RayHit {
         bool              IntersectState;
@@ -95,8 +91,67 @@ namespace VCX::Labs::Rendering {
     };
 
     /* Optional: write your own accelerated intersector here */
+    struct BVHRayIntersector {
+        Engine::Scene const * InternalScene = nullptr;
+        BVH                   bvh;
 
-    using RayIntersector = TrivialRayIntersector;
+        BVHRayIntersector() = default;
+
+        void InitScene(Engine::Scene const * scene) {
+            InternalScene = scene;
+            std::vector<BVH::Face> faces;
+            int                    maxmodel = InternalScene->Models.size();
+
+            for (int i = 0; i < maxmodel; ++i) {
+                auto const & model  = InternalScene->Models[i];
+                int          maxidx = model.Mesh.Indices.size();
+                for (int j = 0; j < maxidx; j += 3)
+                    faces.push_back(BVH::Face(&model, model.Mesh.Indices.data() + j));
+            }
+            bvh.Clear();
+            bvh.Build(faces);
+        }
+
+        RayHit IntersectRay(Ray const & ray) const {
+            RayHit result;
+            if (! InternalScene) {
+                spdlog::warn("VCX::Labs::Rendering::RayIntersector::IntersectRay(..): uninitialized intersector.");
+                result.IntersectState = false;
+                return result;
+            }
+            Intersection its;
+            BVH::Face resface;
+            if(!bvh.FindIntersection(its, resface, ray))
+            {
+                result.IntersectState = false;
+                return result;
+            }
+            auto const &          normals   = resface.model->Mesh.IsNormalAvailable() ? resface.model->Mesh.Normals : resface.model->Mesh.ComputeNormals();
+            auto const &          texcoords = resface.model->Mesh.IsTexCoordAvailable() ? resface.model->Mesh.TexCoords : resface.model->Mesh.GetEmptyTexCoords();
+            std::uint32_t const * face      = resface.indice;
+            glm::vec3 const &     p1        = resface.model->Mesh.Positions[face[0]];
+            glm::vec3 const &     p2        = resface.model->Mesh.Positions[face[1]];
+            glm::vec3 const &     p3        = resface.model->Mesh.Positions[face[2]];
+            glm::vec3 const &     n1        = normals[face[0]];
+            glm::vec3 const &     n2        = normals[face[1]];
+            glm::vec3 const &     n3        = normals[face[2]];
+            glm::vec2 const &     uv1       = texcoords[face[0]];
+            glm::vec2 const &     uv2       = texcoords[face[1]];
+            glm::vec2 const &     uv3       = texcoords[face[2]];
+            result.IntersectState           = true;
+            auto const & material           = InternalScene->Materials[resface.model->MaterialIndex];
+            result.IntersectMode            = material.Blend;
+            result.IntersectPosition        = (1.0f - its.u - its.v) * p1 + its.u * p2 + its.v * p3;
+            result.IntersectNormal          = (1.0f - its.u - its.v) * n1 + its.u * n2 + its.v * n3;
+            glm::vec2 uvCoord               = (1.0f - its.u - its.v) * uv1 + its.u * uv2 + its.v * uv3;
+            result.IntersectAlbedo          = GetAlbedo(material, uvCoord);
+            result.IntersectMetaSpec        = GetTexture(material.MetaSpec, uvCoord);
+
+            return result;
+        }
+    };
+
+    using RayIntersector = BVHRayIntersector;
 
     glm::vec3 RayTrace(const RayIntersector & intersector, Ray ray, int maxDepth, bool enableShadow);
 
