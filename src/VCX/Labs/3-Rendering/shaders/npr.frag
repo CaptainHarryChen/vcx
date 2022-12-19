@@ -29,7 +29,10 @@ uniform vec3 u_WarmColor;
 
 vec3 Shade (vec3 lightDir, vec3 normal) {
     // your code here:
-    return vec3(0);
+    float cosine = max(dot(normal, lightDir), 0);
+    int lev = int(cosine * 4 + 0.5);
+    float k = lev / 4.0;
+    return k * u_WarmColor+(1.0 - k) * u_CoolColor;
 }
 
 void main() {

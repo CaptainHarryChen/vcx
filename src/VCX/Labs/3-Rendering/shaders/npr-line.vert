@@ -27,9 +27,16 @@ uniform int u_ScreenHeight;
 uniform float u_LineWidth;
 
 void main() {
+    // Move in std
     vec4 clipPos = u_Projection * u_View * vec4(a_Position, 1.);
     vec3 clipNorm = mat3(u_Projection) * mat3(u_View) * a_Normal;
     vec2 offset = normalize(clipNorm.xy) / vec2(u_ScreenWidth, u_ScreenHeight) * u_LineWidth * clipPos.w * 2;
     clipPos.xy += offset;
     gl_Position = clipPos;
+
+    // Move in world coordinate
+    // vec4 clipPos = vec4(a_Position, 1.);
+    // vec3 offset = a_Normal * u_LineWidth * clipPos.w * 0.1;
+    // clipPos.xyz += offset;
+    // gl_Position = u_Projection * u_View * clipPos;
 }
