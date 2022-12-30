@@ -173,10 +173,26 @@ namespace VCX::Labs::Animation {
         return custom;
     }
 
+    Eigen::VectorXf Calc_dampforce(const MassSpringSystem & system, const Eigen::VectorXf & x, const Eigen::VectorXf & v) {
+        Eigen::VectorXf res = Eigen::VectorXf::Zero(3 * system.Positions.size());
+        for (auto const spring : system.Springs) {
+            auto const p0 = spring.AdjIdx.first;
+            auto const p1 = spring.AdjIdx.second;
+            glm::vec3 const x01 = glm::vec3(x[p1 * 3 + 0], x[p1 * 3 + 1], x[p1 * 3 + 2])  - glm::vec3(x[p0 * 3 + 0], x[p0 * 3 + 1], x[p0 * 3 + 2]);
+            glm::vec3 const v01 = glm::vec3(v[p1 * 3 + 0], v[p1 * 3 + 1], v[p1 * 3 + 2])  - glm::vec3(v[p0 * 3 + 0], v[p0 * 3 + 1], v[p0 * 3 + 2]);
+            glm::vec3 const e01 = glm::normalize(x01);
+            glm::vec3 f = system.Damping * glm::dot(v01, e01) * e01;
+            for(int i = 0; i < 3; i++) {
+                res[p0 * 3 + i] += f[i];
+                res[p1 * 3 + i] -= f[i];
+            }
+        }
+        return res;
+    }
+
     float Calc_g(const MassSpringSystem & system, const Eigen::VectorXf & x, const Eigen::VectorXf  & y, float h) {
         auto ttt = (x - y).transpose() * system.Mass * (x - y);
         float res = ttt[0] / (2.0f * h * h);
-        std::vector<glm::vec3> forces(system.Positions.size(), glm::vec3(0));
         for (auto const spring : system.Springs) {
             auto const p0 = spring.AdjIdx.first;
             auto const p1 = spring.AdjIdx.second;
@@ -287,7 +303,7 @@ namespace VCX::Labs::Animation {
 
     void AdvanceMassSpringSystem(MassSpringSystem & system, float const dt) {
         // your code here: rewrite following code
-        bool const useNewtonMethod = true; // choose the algorithm
+        bool const useNewtonMethod = false; // choose the algorithm
 
         int const numIteration = 3;
         int const steps = 1;
@@ -309,6 +325,7 @@ namespace VCX::Labs::Animation {
                 grav[i] = i % 3 == 1 ? -system.Gravity : 0.0f;
             }
             Eigen::VectorXf y = x0 + v0 * h + grav * h * h;
+            y += Calc_dampforce(system, x0, v0) * h * h / system.Mass;
             Eigen::VectorXf x1 = y;
             float g1 = Calc_g(system, x1, y, h);
             for(int iter = 0; iter < numIteration; iter++) {
