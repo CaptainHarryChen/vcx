@@ -2,7 +2,7 @@
 
 #include <spdlog/spdlog.h>
 
-#include "Labs/3-Rendering/SceneObject.h"
+#include "Labs/Photon_Mapping/SceneObject.h"
 
 namespace VCX::Labs::Rendering {
     SkyboxObject::SkyboxObject(Engine::Skybox const & skybox) :

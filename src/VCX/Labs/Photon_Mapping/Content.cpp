@@ -3,7 +3,7 @@
 #include <spdlog/spdlog.h>
 
 #include "Engine/loader.h"
-#include "Labs/3-Rendering/Content.h"
+#include "Labs/Photon_Mapping/Content.h"
 
 namespace VCX::Labs::Rendering {
     static void AddGround(Engine::Scene & scene) {

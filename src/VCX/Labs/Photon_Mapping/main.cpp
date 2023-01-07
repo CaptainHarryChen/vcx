@@ -1,5 +1,5 @@
 #include "Assets/bundled.h"
-#include "Labs/3-Rendering/App.h"
+#include "Labs/Photon_Mapping/App.h"
 
 int main() {
     using namespace VCX;
