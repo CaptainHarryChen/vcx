@@ -98,10 +98,10 @@ namespace VCX::Labs::Rendering {
         TransparentModels.clear();
         for (auto const & model : scene.Models) {
             auto const blend = scene.Materials[model.MaterialIndex].Blend;
-            if (blend == Engine::BlendMode::Opaque) {
-                OpaqueModels.push_back(ModelObject(model));
-            } else if (blend == Engine::BlendMode::Transparent) {
+            if (blend == Engine::BlendMode::Transparent || blend == Engine::BlendMode::TransparentGlass || blend == Engine::BlendMode::TransparentNoFresnel || blend == Engine::BlendMode::TransparentNoReflect) {
                 TransparentModels.push_back(ModelObject(model));
+            } else {
+                OpaqueModels.push_back(ModelObject(model));
             }
         }
 

@@ -189,6 +189,7 @@ namespace VCX::Labs::Rendering {
                 if (_pixelIndex == 0 && _treeDirty) {
                     Engine::Scene const & scene = GetScene(_sceneIdx);
                     _intersector.InitScene(&scene);
+                    _photonmapping.InitScene(&scene, _intersector);
                     _treeDirty = false;
                 }
                 // Render into tex.
