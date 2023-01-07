@@ -2,19 +2,19 @@
 
 #include "Engine/GL/Frame.hpp"
 #include "Engine/GL/Program.h"
-#include "Labs/3-Rendering/Content.h"
-#include "Labs/3-Rendering/SceneObject.h"
-#include "Labs/3-Rendering/tasks.h"
+#include "Labs/Photon_Mapping/Content.h"
+#include "Labs/Photon_Mapping/SceneObject.h"
+#include "Labs/Photon_Mapping/Intersecter.h"
 #include "Labs/Common/ICase.h"
 #include "Labs/Common/ImageRGB.h"
 #include "Labs/Common/OrbitCameraManager.h"
 
 namespace VCX::Labs::Rendering {
 
-    class CaseRayTracing : public Common::ICase {
+    class CaseSimple : public Common::ICase {
     public:
-        CaseRayTracing(std::initializer_list<Assets::ExampleScene> && scenes);
-        ~CaseRayTracing();
+        CaseSimple(std::initializer_list<Assets::ExampleScene> && scenes);
+        ~CaseSimple();
 
         virtual std::string_view const GetName() override { return "Whitted-Style Ray Tracing"; }
 
