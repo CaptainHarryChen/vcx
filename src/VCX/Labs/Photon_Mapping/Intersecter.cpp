@@ -1,4 +1,5 @@
 #include "Labs/Photon_Mapping/Intersecter.h"
+#include <random>
 
 namespace VCX::Labs::Rendering {
 
@@ -33,6 +34,57 @@ namespace VCX::Labs::Rendering {
         if (output.u < 0 || output.v > 1 || output.v < 0 || output.v > 1 || output.u + output.v > 1)
             return false;
         return true;
+    }
+
+    glm::vec3 RandomDirection() {
+        static std::mt19937                   e;
+        std::uniform_real_distribution<float> uni(0, 1);
+        float                                 u = uni(e), v = uni(e);
+        float                                 theta = 2.0f * std::_Pi * u;
+        float                                 phi   = acos(2.0f * v - 1);
+        return glm::vec3(sin(theta) * sin(phi), cos(theta) * sin(phi), cos(phi));
+    }
+
+    glm::vec3 RandomHemiDirection(const glm::vec3 & normal) {
+        glm::vec3 res = RandomDirection();
+        float     d   = glm::dot(res, normal);
+        if (d < 0.0f)
+            res -= normal * d * 2.0f;
+        return res;
+    }
+
+    RayReflect DirectionFromBSDF(const Ray & ray, const RayHit & rayHit) {
+        assert(rayHit.IntersectState);
+        static std::mt19937                   e;
+        std::uniform_real_distribution<float> uni01(0, 1);
+
+        float     alpha     = rayHit.IntersectAlbedo.w;
+        float     shininess = rayHit.IntersectMetaSpec.w;
+        glm::vec3 n         = rayHit.IntersectNormal;
+        glm::vec3 ks        = rayHit.IntersectMetaSpec;
+        glm::vec3 kd        = rayHit.IntersectAlbedo;
+
+        RayReflect res;
+        if (rayHit.IntersectMode == Engine::BlendMode::Phong) {
+            res.Type            = ReflectType::Diffuse;
+            glm::vec3 dir       = RandomHemiDirection(n);
+            glm::vec3 h         = glm::normalize(-ray.Direction + dir);
+            float     spec_coef = glm::pow(glm::max(glm::dot(h, n), 0.0f), shininess);
+            float     diff_coef = glm::max(glm::dot(dir, n), 0.0f);
+            res.Attenuation     = (diff_coef * kd + spec_coef * ks);
+            res.Direction       = dir;
+        } else if (rayHit.IntersectMode == Engine::BlendMode::Reflect || rayHit.IntersectMode == Engine::BlendMode::ReflectNoFresnel) {
+            res.Type        = ReflectType::Specular;
+            res.Direction   = ray.Direction - glm::vec3(2.0f) * n * glm::dot(n, ray.Direction);
+            res.Attenuation = ks;
+        } else if (rayHit.IntersectMode == Engine::BlendMode::Transparent || rayHit.IntersectMode == Engine::BlendMode::TransparentGlass || rayHit.IntersectMode == Engine::BlendMode::TransparentNoFresnel) {
+            // Todo:
+        } else if (rayHit.IntersectMode == Engine::BlendMode::TransparentNoReflect) {
+            // Todo:
+        } else {
+            res.Type = ReflectType::None;
+        }
+        return res;
     }
 
 } // namespace VCX::Labs::Rendering

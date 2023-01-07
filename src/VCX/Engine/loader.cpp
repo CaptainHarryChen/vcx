@@ -48,7 +48,7 @@ namespace YAML {
     struct convert<VCX::Engine::BlendMode> {
         static bool decode(Node const & node, VCX::Engine::BlendMode & rhs) {
             std::string str { node.as<std::string>() };
-            if (str == "Opaque") rhs = VCX::Engine::BlendMode::Opaque;
+            if (str == "Opaque" || str == "Phong") rhs = VCX::Engine::BlendMode::Phong;
             else if (str == "Transparent") rhs = VCX::Engine::BlendMode::Transparent;
             else return false;
             return true;
@@ -282,7 +282,7 @@ namespace VCX::Engine {
             materials.emplace_back();
             auto & material = materials.back();
 
-            material.Blend = BlendMode::Opaque;
+            material.Blend = BlendMode(mats[i].illum);
 
             material.Albedo.Fill(glm::vec4(mats[i].diffuse[0], mats[i].diffuse[1], mats[i].diffuse[2], mats[i].dissolve));
             SetMap4(material.Albedo, mats[i].diffuse_texname);

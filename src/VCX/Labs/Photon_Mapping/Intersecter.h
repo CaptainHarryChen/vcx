@@ -1,3 +1,5 @@
+#pragma once
+
 #include <spdlog/spdlog.h>
 
 #include "Engine/Scene.h"
@@ -22,11 +24,28 @@ namespace VCX::Labs::Rendering {
         float t, u, v; // ray parameter t, barycentric coordinates (u, v)
     };
 
-    glm::vec4 GetTexture(Engine::Texture2D<Engine::Formats::RGBA8> const & texture, glm::vec2 const & uvCoord);
+    enum class ReflectType {
+        None,
+        Diffuse,
+        Specular,
+        Refraction,
+    };
 
+    struct RayReflect {
+        ReflectType Type;
+        glm::vec3 Direction;
+        glm::vec3 Attenuation;
+    };
+
+    glm::vec4 GetTexture(Engine::Texture2D<Engine::Formats::RGBA8> const & texture, glm::vec2 const & uvCoord);
     glm::vec4 GetAlbedo(Engine::Material const & material, glm::vec2 const & uvCoord);
 
     bool IntersectTriangle(Intersection & output, Ray const & ray, glm::vec3 const & p1, glm::vec3 const & p2, glm::vec3 const & p3);
+
+    glm::vec3 RandomDirection();
+    glm::vec3 RandomHemiDirection(const glm::vec3 &normal);
+    
+    RayReflect DirectionFromBSDF(const Ray & ray, const RayHit &rayHit);
 
     struct TrivialRayIntersector {
         Engine::Scene const * InternalScene = nullptr;

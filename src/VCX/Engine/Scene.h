@@ -43,9 +43,18 @@ namespace VCX::Engine {
     };
 
     enum class BlendMode {
-        Opaque,
+        ColorOnly,
+        DiffuseOnly,
+        Phong,
+        ReflectNoFresnel,
+        TransparentGlass,
+        Reflect,
+        TransparentNoFresnel,
         Transparent,
-    };
+        ReflectNoTrace,
+        TransparentNoReflect,
+        Shadow,
+    }; // see the defination of 'illum' in '.mtl' format for more details : https://en.wikipedia.org/wiki/Wavefront_.obj_file
 
     struct Material {
         BlendMode                     Blend;

@@ -11,4 +11,13 @@ namespace VCX::Labs::Rendering {
         Ray(const glm::vec3 & orig, const glm::vec3 & dir):
             Origin { orig }, Direction { dir } {}
     };
+
+    struct Photon {
+        glm::vec3 Origin { 0, 0, 0 };
+        glm::vec3 Direction { 0, 0, 0 };
+        glm::vec3 Power { 1, 1, 1 };
+        Photon() = default;
+        Photon(const glm::vec3 & orig, const glm::vec3 & dir, const glm::vec3 & _power):
+            Origin { orig }, Direction { dir }, Power { _power } {}
+    };
 } // namespace VCX::Labs::Rendering

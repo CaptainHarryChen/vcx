@@ -5,6 +5,7 @@
 #include "Labs/Photon_Mapping/Content.h"
 #include "Labs/Photon_Mapping/SceneObject.h"
 #include "Labs/Photon_Mapping/Intersecter.h"
+#include "Labs/Photon_Mapping/PhotonMapping.h"
 #include "Labs/Common/ICase.h"
 #include "Labs/Common/ImageRGB.h"
 #include "Labs/Common/OrbitCameraManager.h"
@@ -31,6 +32,7 @@ namespace VCX::Labs::Rendering {
 
         Engine::GL::UniqueTexture2D _texture;
         RayIntersector              _intersector;
+        PhotonMapping               _photonmapping;
 
         std::size_t                             _sceneIdx { 0 };
         bool                                    _enableZoom { true };
