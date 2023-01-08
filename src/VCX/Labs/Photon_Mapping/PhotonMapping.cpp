@@ -19,22 +19,46 @@ namespace VCX::Labs::Rendering {
                     // Todo
                 }
                 while (true) {
-                    ray = Ray(p.Origin, p.Direction);
+                    ray           = Ray(p.Origin, p.Direction);
                     RayHit rayHit = intersector.IntersectRay(ray);
                     if (! rayHit.IntersectState) // No intersection
                         break;
                     RayReflect rayReflect = DirectionFromBSDF(ray, rayHit);
                     if (rayReflect.Type == ReflectType::None) // Don't need reflection or refraction
                         break;
-                    Photon next_p = Photon(rayHit.IntersectPosition, rayReflect.Direction, p.Power * rayReflect.Attenuation);
                     if (rayReflect.Type == ReflectType::Diffuse)
-                        photons.push_back(next_p);
-                    if(uni01(rand_e) > P_RR) // Russian Roulette: stop
+                        photons.emplace_back(rayHit.IntersectPosition, p.Direction, p.Power);
+                    if (uni01(rand_e) > P_RR) // Russian Roulette: stop
                         break;
-                    p = next_p;
+                    Photon next_p = Photon(rayHit.IntersectPosition, rayReflect.Direction, p.Power * rayReflect.Attenuation);
+                    p             = next_p;
                 }
             }
         }
+        tree.Build(photons);
+    }
+
+    glm::vec3 PhotonMapping::CollatePhotons(const RayHit & rayHit, const glm::vec3 & out_dir, int numPhotons) const {
+        std::vector<Photon> near_photons;
+        tree.NearestKPhotons(rayHit.IntersectPosition, numPhotons, near_photons);
+
+        float     shininess = rayHit.IntersectMetaSpec.w;
+        glm::vec3 n         = rayHit.IntersectNormal;
+        glm::vec3 ks        = rayHit.IntersectMetaSpec;
+        glm::vec3 kd        = rayHit.IntersectAlbedo;
+
+        float     radius2 = 0.0f;
+        glm::vec3 pos     = rayHit.IntersectPosition;
+        glm::vec3 flux    = glm::vec3(0.0f);
+        for (auto p : near_photons) {
+            radius2             = glm::max(radius2, glm::dot(p.Origin - pos, p.Origin - pos));
+            glm::vec3 h         = glm::normalize(-p.Direction + out_dir);
+            float     spec_coef = glm::pow(glm::max(glm::dot(h, n), 0.0f), shininess);
+            float     diff_coef = glm::max(glm::dot(out_dir, n), 0.0f);
+            flux += p.Power * (diff_coef * kd + spec_coef * ks);
+        }
+        flux /= (3.14159265f * radius2 * photons.size());
+        return flux;
     }
 
 } // namespace VCX::Labs::Rendering
