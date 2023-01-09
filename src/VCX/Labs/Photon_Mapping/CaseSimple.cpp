@@ -79,6 +79,7 @@ namespace VCX::Labs::Rendering {
         if (ImGui::CollapsingHeader("Appearance", ImGuiTreeNodeFlags_DefaultOpen)) {
             _resetDirty |= ImGui::SliderInt("Sample Rate", &_superSampleRate, 1, 5);
             _resetDirty |= ImGui::SliderInt("Max Depth", &_maximumDepth, 1, 15);
+            _resetDirty |= ImGui::SliderFloat("Gamma Correction", &_gamma, 1.0f, 10.0f);
             _resetDirty |= ImGui::Checkbox("Shadow Ray", &_enableShadow);
         }
         ImGui::Spacing();
@@ -150,7 +151,7 @@ namespace VCX::Labs::Rendering {
                             lookDir += fovFactor * aspect * (2.0f * (i + di) / width - 1.0f) * rightDir;
                             Ray       initialRay(camera.Eye, glm::normalize(lookDir));
                             glm::vec3 res = RayTrace(_photonmapping, _intersector, initialRay, _maximumDepth, _enableShadow);
-                            sum += glm::pow(res, glm::vec3(1.0 / 2.2));
+                            sum += glm::pow(res, glm::vec3(1.0 / _gamma));
                         }
                     _buffer.At(i, j) = sum / glm::vec3(_superSampleRate * _superSampleRate);
                     ++_pixelIndex;
