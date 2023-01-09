@@ -27,12 +27,14 @@ namespace VCX::Labs::Rendering {
         std::vector<Assets::ExampleScene> const _scenes;
         Engine::GL::UniqueProgram               _program;
         Engine::GL::UniqueRenderFrame           _frame;
+        Engine::GL::UniqueRenderItem            _pointItem;
         SceneObject                             _sceneObject;
         Common::OrbitCameraManager              _cameraManager;
 
         Engine::GL::UniqueTexture2D _texture;
         RayIntersector              _intersector;
         PhotonMapping               _photonmapping;
+        std::vector<glm::vec3>      photon_pos;
 
         std::size_t      _sceneIdx { 0 };
         bool             _enableZoom { true };
@@ -40,6 +42,7 @@ namespace VCX::Labs::Rendering {
         int              _maximumDepth { 3 };
         int              _superSampleRate { 1 };
         std::size_t      _pixelIndex { 0 };
+        bool             _onInit { false };
         bool             _stopFlag { true };
         bool             _sceneDirty { true };
         bool             _treeDirty { true };
