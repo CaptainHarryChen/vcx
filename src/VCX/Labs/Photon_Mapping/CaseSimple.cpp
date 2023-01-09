@@ -38,6 +38,7 @@ namespace VCX::Labs::Rendering {
         _program(
             Engine::GL::UniqueProgram({ Engine::GL::SharedShader("assets/shaders/flat.vert"),
                                         Engine::GL::SharedShader("assets/shaders/flat.frag") })),
+        _pointItem(Engine::GL::VertexLayout().Add<glm::vec3>("position", Engine::GL::DrawFrequency::Stream, 0), Engine::GL::PrimitiveType::Points),
         _sceneObject(4),
         _texture({ .MinFilter = Engine::GL::FilterMode::Linear, .MagFilter = Engine::GL::FilterMode::Nearest }) {
         _cameraManager.AutoRotate = false;
@@ -65,13 +66,20 @@ namespace VCX::Labs::Rendering {
             ImGui::EndCombo();
         }
         if (ImGui::Button("Reset Scene")) _resetDirty = true;
-        ImGui::SameLine();
+        if (ImGui::Button("Initialize"))  {
+            if(_treeDirty)
+                _onInit = true;
+        }
+        ImGui::ProgressBar(_treeDirty ? 0.0f : 1.0f);
         if (_task.joinable()) {
             if (ImGui::Button("Stop Rendering")) {
                 _stopFlag = true;
                 if (_task.joinable()) _task.join();
             }
-        } else if (ImGui::Button("Start Rendering")) _stopFlag = false;
+        } else if (ImGui::Button("Start Rendering")) {
+            if (! _treeDirty)
+                _stopFlag = false;
+        }
         ImGui::ProgressBar(float(_pixelIndex) / (_buffer.GetSizeX() * _buffer.GetSizeY()));
         Common::ImGuiHelper::SaveImage(_texture, GetBufferSize(), true);
         ImGui::Spacing();
@@ -111,6 +119,7 @@ namespace VCX::Labs::Rendering {
 
             gl_using(_frame);
 
+            _program.GetUniforms().SetByName("u_Color", glm::vec3(1.0f, 1.0f, 1.0f));
             glEnable(GL_DEPTH_TEST);
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             for (auto const & model : _sceneObject.OpaqueModels)
@@ -118,7 +127,34 @@ namespace VCX::Labs::Rendering {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glDisable(GL_DEPTH_TEST);
         }
-        if (! _stopFlag && ! _task.joinable()) {
+        if (_onInit && ! _task.joinable()) {
+            _task = std::thread([&]() {
+                if (_pixelIndex == 0 && _treeDirty) {
+                    Engine::Scene const & scene = GetScene(_sceneIdx);
+                    _intersector.InitScene(&scene);
+                    _photonmapping.InitScene(&scene, _intersector);
+
+                    photon_pos.clear();
+                    for (const auto & p : _photonmapping.photons)
+                        photon_pos.push_back(p.Origin);
+                    _treeDirty = false;
+                }
+                _onInit = false;
+            });
+        }
+
+        if (! _treeDirty && _resizable) {
+            if (_task.joinable())
+                _task.join();
+            auto hist_span = std::span<const std::byte>(reinterpret_cast<const std::byte *>(photon_pos.data()), reinterpret_cast<const std::byte *>(photon_pos.data() + photon_pos.size()));
+            _pointItem.UpdateVertexBuffer("position", hist_span);
+            gl_using(_frame);
+            glPointSize(1.f);
+            _program.GetUniforms().SetByName("u_Color", glm::vec3(1.0f, 0.0f, 0.0f));
+            _pointItem.Draw({ _program.Use() });
+        }
+
+        if (! _stopFlag && ! _treeDirty && ! _task.joinable()) {
             if (_pixelIndex == 0) {
                 _resizable = false;
                 _buffer    = _frame.GetColorAttachment().Download<Engine::Formats::RGB8>();
@@ -126,12 +162,7 @@ namespace VCX::Labs::Rendering {
             _task = std::thread([&]() {
                 auto const width  = _buffer.GetSizeX();
                 auto const height = _buffer.GetSizeY();
-                if (_pixelIndex == 0 && _treeDirty) {
-                    Engine::Scene const & scene = GetScene(_sceneIdx);
-                    _intersector.InitScene(&scene);
-                    _photonmapping.InitScene(&scene, _intersector);
-                    _treeDirty = false;
-                }
+
                 // Render into tex.
                 while (_pixelIndex < std::size_t(width) * height) {
                     int       i = _pixelIndex % width;
