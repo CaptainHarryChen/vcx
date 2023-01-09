@@ -63,6 +63,8 @@ namespace VCX::Labs::Rendering {
         glm::vec3 n         = rayHit.IntersectNormal;
         glm::vec3 ks        = rayHit.IntersectMetaSpec;
         glm::vec3 kd        = rayHit.IntersectAlbedo;
+        float     Ior       = rayHit.IntersectIor;
+        glm::vec3 tr        = rayHit.IntersectTrans;
 
         RayReflect res;
         if (rayHit.IntersectMode == Engine::BlendMode::Phong) {
@@ -78,9 +80,32 @@ namespace VCX::Labs::Rendering {
             res.Direction   = ray.Direction - glm::vec3(2.0f) * n * glm::dot(n, ray.Direction);
             res.Attenuation = ks;
         } else if (rayHit.IntersectMode == Engine::BlendMode::Transparent || rayHit.IntersectMode == Engine::BlendMode::TransparentGlass || rayHit.IntersectMode == Engine::BlendMode::TransparentNoFresnel) {
-            // Todo:
+            // Todo: random choose to reflect or transmit
+            float     ior    = 1.0f / Ior;
+            glm::vec3 normal = n;
+            if (glm::dot(ray.Direction, n) > 0.f) {
+                ior    = 1.0f / ior;
+                normal = -n;
+            }
+            float     cosi  = glm::dot(-ray.Direction, normal);
+            float     cost2 = 1.0f - ior * ior * (1.0f - cosi * cosi);
+            glm::vec3 t     = ray.Direction * ior + normal * (ior * cosi - sqrt(fabs(cost2)));
+            res.Type        = ReflectType::Refraction;
+            res.Direction   = (cost2 > 0) ? t : glm::vec3(0.0f);
+            res.Attenuation = tr;
         } else if (rayHit.IntersectMode == Engine::BlendMode::TransparentNoReflect) {
-            // Todo:
+            float     ior    = 1.0f / Ior;
+            glm::vec3 normal = n;
+            if (glm::dot(ray.Direction, n) > 0.f) {
+                ior    = 1.0f / ior;
+                normal = -n;
+            }
+            float     cosi  = glm::dot(-ray.Direction, normal);
+            float     cost2 = 1.0f - ior * ior * (1.0f - cosi * cosi);
+            glm::vec3 t     = ray.Direction * ior + normal * (ior * cosi - sqrt(fabs(cost2)));
+            res.Type        = ReflectType::Refraction;
+            res.Direction   = (cost2 > 0) ? t : glm::vec3(0.0f);
+            res.Attenuation = tr;
         } else {
             res.Type = ReflectType::None;
         }

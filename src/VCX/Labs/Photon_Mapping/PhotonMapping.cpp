@@ -57,7 +57,7 @@ namespace VCX::Labs::Rendering {
             float     diff_coef = glm::max(glm::dot(out_dir, n), 0.0f);
             flux += p.Power * (diff_coef * kd + spec_coef * ks);
         }
-        flux /= (3.14159265f * radius2 * photons.size());
+        flux /= (glm::pi<float>() * radius2 * photons.size());
         return flux;
     }
 

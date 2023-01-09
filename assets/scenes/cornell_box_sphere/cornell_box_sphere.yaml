@@ -1,0 +1,18 @@
+Reflection: Empirical
+AmbientIntensity: [0.05, 0.05, 0.05]
+
+Cameras:
+  - Eye: [0, 0.2, 5]
+    Target: [0, 0.75, 0]
+    Up: [0, 1, 0]
+    Fovy: 39.3076481
+    ZNear: 0.01
+    ZFar: 10
+
+Lights:
+  - Type: Point
+    Position: [0, 1.56, 0]
+    Intensity: [10, 10, 10]
+
+ComplexModels:
+  - Mesh: CornellBox-Sphere.obj
