@@ -9,19 +9,43 @@
 
 namespace VCX::Engine {
     struct Skybox {
-        static constexpr auto c_PositionData = std::to_array<glm::vec3>({
-            { -1.0f,  1.0f, -1.0f }, { -1.0f, -1.0f, -1.0f }, {  1.0f, -1.0f, -1.0f },
-            {  1.0f, -1.0f, -1.0f }, {  1.0f,  1.0f, -1.0f }, { -1.0f,  1.0f, -1.0f },
-            { -1.0f, -1.0f,  1.0f }, { -1.0f, -1.0f, -1.0f }, { -1.0f,  1.0f, -1.0f },
-            { -1.0f,  1.0f, -1.0f }, { -1.0f,  1.0f,  1.0f }, { -1.0f, -1.0f,  1.0f },
-            {  1.0f, -1.0f, -1.0f }, {  1.0f, -1.0f,  1.0f }, {  1.0f,  1.0f,  1.0f },
-            {  1.0f,  1.0f,  1.0f }, {  1.0f,  1.0f, -1.0f }, {  1.0f, -1.0f, -1.0f },
-            { -1.0f, -1.0f,  1.0f }, { -1.0f,  1.0f,  1.0f }, {  1.0f,  1.0f,  1.0f },
-            {  1.0f,  1.0f,  1.0f }, {  1.0f, -1.0f,  1.0f }, { -1.0f, -1.0f,  1.0f },
-            { -1.0f,  1.0f, -1.0f }, {  1.0f,  1.0f, -1.0f }, {  1.0f,  1.0f,  1.0f },
-            {  1.0f,  1.0f,  1.0f }, { -1.0f,  1.0f,  1.0f }, { -1.0f,  1.0f, -1.0f },
-            { -1.0f, -1.0f, -1.0f }, { -1.0f, -1.0f,  1.0f }, {  1.0f, -1.0f, -1.0f },
-            {  1.0f, -1.0f, -1.0f }, { -1.0f, -1.0f,  1.0f }, {  1.0f, -1.0f,  1.0f },
+        static constexpr auto                   c_PositionData = std::to_array<glm::vec3>({
+            {-1.0f,  1.0f, -1.0f},
+            {-1.0f, -1.0f, -1.0f},
+            { 1.0f, -1.0f, -1.0f},
+            { 1.0f, -1.0f, -1.0f},
+            { 1.0f,  1.0f, -1.0f},
+            {-1.0f,  1.0f, -1.0f},
+            {-1.0f, -1.0f,  1.0f},
+            {-1.0f, -1.0f, -1.0f},
+            {-1.0f,  1.0f, -1.0f},
+            {-1.0f,  1.0f, -1.0f},
+            {-1.0f,  1.0f,  1.0f},
+            {-1.0f, -1.0f,  1.0f},
+            { 1.0f, -1.0f, -1.0f},
+            { 1.0f, -1.0f,  1.0f},
+            { 1.0f,  1.0f,  1.0f},
+            { 1.0f,  1.0f,  1.0f},
+            { 1.0f,  1.0f, -1.0f},
+            { 1.0f, -1.0f, -1.0f},
+            {-1.0f, -1.0f,  1.0f},
+            {-1.0f,  1.0f,  1.0f},
+            { 1.0f,  1.0f,  1.0f},
+            { 1.0f,  1.0f,  1.0f},
+            { 1.0f, -1.0f,  1.0f},
+            {-1.0f, -1.0f,  1.0f},
+            {-1.0f,  1.0f, -1.0f},
+            { 1.0f,  1.0f, -1.0f},
+            { 1.0f,  1.0f,  1.0f},
+            { 1.0f,  1.0f,  1.0f},
+            {-1.0f,  1.0f,  1.0f},
+            {-1.0f,  1.0f, -1.0f},
+            {-1.0f, -1.0f, -1.0f},
+            {-1.0f, -1.0f,  1.0f},
+            { 1.0f, -1.0f, -1.0f},
+            { 1.0f, -1.0f, -1.0f},
+            {-1.0f, -1.0f,  1.0f},
+            { 1.0f, -1.0f,  1.0f},
         });
         std::array<Texture2D<Formats::RGB8>, 6> Images;
     };
@@ -34,11 +58,11 @@ namespace VCX::Engine {
     };
 
     struct Light {
-        LightType Type        { LightType::Point };
-        glm::vec3 Intensity   { 1, 1, 1 };
-        glm::vec3 Direction   { 1, 0, 0 };
-        glm::vec3 Position    { 0, 0, 0 };
-        float     CutOff      { 0 };
+        LightType Type { LightType::Point };
+        glm::vec3 Intensity { 1, 1, 1 };
+        glm::vec3 Direction { 1, 0, 0 };
+        glm::vec3 Position { 0, 0, 0 };
+        float     CutOff { 0 };
         float     OuterCutOff { 0 };
     };
 
@@ -57,17 +81,19 @@ namespace VCX::Engine {
     }; // see the defination of 'illum' in '.mtl' format for more details : https://en.wikipedia.org/wiki/Wavefront_.obj_file
 
     struct Material {
-        BlendMode                     Blend;
-        Texture2D<Formats::RGBA8>     Albedo   { 1, 1 };
+        BlendMode                 Blend;
+        Texture2D<Formats::RGBA8> Albedo { 1, 1 };
         // Phong/Blinn-Phong:  MetaSpec = [Specular (RGB), Shininess  (Alpha)]
         // PBR workflow I:     MetaSpec = [Metallic (Red), Smoothness (Alpha)]
         // PBR workflow II:    MetaSpec = [Specular (RGB), Glossiness (Alpha)]
-        Texture2D<Formats::RGBA8>     MetaSpec { 1, 1 };
-        Texture2D<Formats::R8>        Height   { 1, 1 };
+        Texture2D<Formats::RGBA8> MetaSpec { 1, 1 };
+        Texture2D<Formats::R8>    Height { 1, 1 };
+        float                     Ior = 1.0f;
+        glm::vec3                 Trans;
     };
 
     struct Model {
-        SurfaceMesh   Mesh          { };
+        SurfaceMesh   Mesh {};
         std::uint32_t MaterialIndex { 0 };
     };
 
@@ -78,10 +104,10 @@ namespace VCX::Engine {
     };
 
     struct Scene {
-        ReflectionType        Reflection       { ReflectionType::Empirical };
+        ReflectionType        Reflection { ReflectionType::Empirical };
         glm::vec3             AmbientIntensity { 0.1, 0.1, 0.1 };
         std::vector<Skybox>   Skyboxes;
-        std::vector<Camera>   Cameras          { Camera() };
+        std::vector<Camera>   Cameras { Camera() };
         std::vector<Light>    Lights;
         std::vector<Material> Materials;
         std::vector<Model>    Models;

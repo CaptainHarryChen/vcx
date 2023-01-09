@@ -17,7 +17,7 @@ namespace VCX::Labs::Rendering {
         CaseSimple(std::initializer_list<Assets::ExampleScene> && scenes);
         ~CaseSimple();
 
-        virtual std::string_view const GetName() override { return "Whitted-Style Ray Tracing"; }
+        virtual std::string_view const GetName() override { return "Simple Photon Mapping"; }
 
         virtual void                     OnSetupPropsUI() override;
         virtual Common::CaseRenderResult OnRender(std::pair<std::uint32_t, std::uint32_t> const desiredSize) override;
@@ -46,7 +46,7 @@ namespace VCX::Labs::Rendering {
         bool             _resetDirty { true };
         Common::ImageRGB _buffer;
         bool             _resizable { true };
-        float            _gamma = 1.0f;
+        float            _gamma = 2.5f;
 
         std::thread _task;
 

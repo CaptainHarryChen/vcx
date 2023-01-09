@@ -293,6 +293,9 @@ namespace VCX::Engine {
             material.Height.Fill(0);
             SetMap1(material.Height, mats[i].bump_texname);
 
+            material.Ior = mats[i].ior;
+            material.Trans = glm::vec3(mats[i].transmittance[0], mats[i].transmittance[1], mats[i].transmittance[2]);
+
             std::unordered_map<std::tuple<int, int, int>, std::uint32_t> vtxHashList;
             AddUniqueVertices(attrib, perMatFaces[i], vtxHashList, model.Mesh);
         }

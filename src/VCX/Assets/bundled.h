@@ -46,6 +46,7 @@ namespace VCX::Assets {
         std::to_array<std::string_view>({
             "assets/scenes/floor/floor.yaml",
             "assets/scenes/cornell_box/cornell_box.yaml",
+            "assets/scenes/cornell_box_sphere/cornell_box_sphere.yaml",
             "assets/scenes/teapot/teapot.yaml",
             "assets/scenes/bunny/bunny.yaml",
             "assets/scenes/sponza/sponza.yaml",
@@ -59,6 +60,7 @@ namespace VCX::Assets {
     enum class ExampleScene {
         Floor,
         CornellBox,
+        CornellBoxSphere,
         Teapot,
         Bunny,
         Sponza,

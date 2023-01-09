@@ -18,6 +18,8 @@ namespace VCX::Labs::Rendering {
         glm::vec3         IntersectNormal;
         glm::vec4         IntersectAlbedo;   // [Albedo   (vec3), Alpha     (float)]
         glm::vec4         IntersectMetaSpec; // [Specular (vec3), Shininess (float)]
+        glm::vec3         IntersectTrans;
+        float             IntersectIor;
     };
 
     struct Intersection {
@@ -33,8 +35,8 @@ namespace VCX::Labs::Rendering {
 
     struct RayReflect {
         ReflectType Type;
-        glm::vec3 Direction;
-        glm::vec3 Attenuation;
+        glm::vec3   Direction;
+        glm::vec3   Attenuation;
     };
 
     glm::vec4 GetTexture(Engine::Texture2D<Engine::Formats::RGBA8> const & texture, glm::vec2 const & uvCoord);
@@ -43,9 +45,9 @@ namespace VCX::Labs::Rendering {
     bool IntersectTriangle(Intersection & output, Ray const & ray, glm::vec3 const & p1, glm::vec3 const & p2, glm::vec3 const & p3);
 
     glm::vec3 RandomDirection();
-    glm::vec3 RandomHemiDirection(const glm::vec3 &normal);
-    
-    RayReflect DirectionFromBSDF(const Ray & ray, const RayHit &rayHit);
+    glm::vec3 RandomHemiDirection(const glm::vec3 & normal);
+
+    RayReflect DirectionFromBSDF(const Ray & ray, const RayHit & rayHit);
 
     struct TrivialRayIntersector {
         Engine::Scene const * InternalScene = nullptr;
@@ -105,6 +107,8 @@ namespace VCX::Labs::Rendering {
             glm::vec2 uvCoord               = (1.0f - umin - vmin) * uv1 + umin * uv2 + vmin * uv3;
             result.IntersectAlbedo          = GetAlbedo(material, uvCoord);
             result.IntersectMetaSpec        = GetTexture(material.MetaSpec, uvCoord);
+            result.IntersectIor             = material.Ior;
+            result.IntersectTrans           = material.Trans;
 
             return result;
         }
@@ -257,7 +261,9 @@ namespace VCX::Labs::Rendering {
 
     public:
         BVH() = default;
-        ~BVH() { free(root); }
+        ~BVH() {
+            if (root) free(root);
+        }
         void Clear() {
             internelFaces.clear();
             if (root)
@@ -326,6 +332,8 @@ namespace VCX::Labs::Rendering {
             glm::vec2 uvCoord               = (1.0f - its.u - its.v) * uv1 + its.u * uv2 + its.v * uv3;
             result.IntersectAlbedo          = GetAlbedo(material, uvCoord);
             result.IntersectMetaSpec        = GetTexture(material.MetaSpec, uvCoord);
+            result.IntersectIor             = material.Ior;
+            result.IntersectTrans           = material.Trans;
 
             return result;
         }
