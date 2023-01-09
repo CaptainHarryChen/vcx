@@ -27,7 +27,7 @@ namespace VCX::Labs::Rendering {
         }
 
         if (isDiffuse) {
-            color += photonMapping.CollatePhotons(rayHit, -ray.Direction);
+            color += weight * photonMapping.CollatePhotons(rayHit, -ray.Direction);
         }
 
         return color;
