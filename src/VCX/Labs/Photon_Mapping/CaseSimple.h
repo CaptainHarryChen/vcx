@@ -2,13 +2,13 @@
 
 #include "Engine/GL/Frame.hpp"
 #include "Engine/GL/Program.h"
-#include "Labs/Photon_Mapping/Content.h"
-#include "Labs/Photon_Mapping/SceneObject.h"
-#include "Labs/Photon_Mapping/Intersecter.h"
-#include "Labs/Photon_Mapping/PhotonMapping.h"
 #include "Labs/Common/ICase.h"
 #include "Labs/Common/ImageRGB.h"
 #include "Labs/Common/OrbitCameraManager.h"
+#include "Labs/Photon_Mapping/Content.h"
+#include "Labs/Photon_Mapping/Intersecter.h"
+#include "Labs/Photon_Mapping/PhotonMapping.h"
+#include "Labs/Photon_Mapping/SceneObject.h"
 
 namespace VCX::Labs::Rendering {
 
@@ -34,18 +34,19 @@ namespace VCX::Labs::Rendering {
         RayIntersector              _intersector;
         PhotonMapping               _photonmapping;
 
-        std::size_t                             _sceneIdx { 0 };
-        bool                                    _enableZoom { true };
-        bool                                    _enableShadow { true };
-        int                                     _maximumDepth { 3 };
-        int                                     _superSampleRate { 1 };
-        std::size_t                             _pixelIndex { 0 };
-        bool                                    _stopFlag { true };
-        bool                                    _sceneDirty { true };
-        bool                                    _treeDirty { true };
-        bool                                    _resetDirty { true };
-        Common::ImageRGB                        _buffer;
-        bool                                    _resizable { true };
+        std::size_t      _sceneIdx { 0 };
+        bool             _enableZoom { true };
+        bool             _enableShadow { true };
+        int              _maximumDepth { 3 };
+        int              _superSampleRate { 1 };
+        std::size_t      _pixelIndex { 0 };
+        bool             _stopFlag { true };
+        bool             _sceneDirty { true };
+        bool             _treeDirty { true };
+        bool             _resetDirty { true };
+        Common::ImageRGB _buffer;
+        bool             _resizable { true };
+        float            _gamma = 1.0f;
 
         std::thread _task;
 
