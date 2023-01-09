@@ -61,7 +61,7 @@ namespace VCX::Labs::Rendering {
             BuildTree(u->son[1], mid + 1, R, dep + 1);
         }
         void CheckAndAdd(const glm::vec3 & pos, Photon * p, int K, NearestQueue & Q) const {
-            if(Q.size() < K) {
+            if (Q.size() < K) {
                 Q.push(disNode(glm::dot(pos - p->Origin, pos - p->Origin), p));
                 return;
             }
@@ -88,7 +88,7 @@ namespace VCX::Labs::Rendering {
             CheckAndAdd(pos, u->p, K, Q);
             float mx   = Q.top().dis;
             float dis2 = (u->p->Origin[axis] - pos[axis]) * (u->p->Origin[axis] - pos[axis]);
-            if (Q.size() < K || mx <= dis2) {
+            if (Q.size() < K || mx >= dis2) {
                 if (pos[axis] > u->p->Origin[axis])
                     FindNearestKPhotons(u->son[0], L, mid, dep + 1, pos, K, Q);
                 else
@@ -118,7 +118,7 @@ namespace VCX::Labs::Rendering {
         void NearestKPhotons(const glm::vec3 & pos, int K, std::vector<Photon> & ans) const {
             NearestQueue Q;
             FindNearestKPhotons(root, 0, internelPhotons.size(), 0, pos, K, Q);
-            while (Q.empty()) {
+            while (! Q.empty()) {
                 ans.push_back(*Q.top().p);
                 Q.pop();
             }
