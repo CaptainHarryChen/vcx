@@ -124,7 +124,14 @@ namespace VCX::Labs::Rendering {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             for (auto const & model : _sceneObject.OpaqueModels)
                 model.Mesh.Draw({ _program.Use() });
+            for (auto const & model : _sceneObject.TransparentModels)
+                model.Mesh.Draw({ _program.Use() });
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            if(!_treeDirty) {
+                glPointSize(1.f);
+                _program.GetUniforms().SetByName("u_Color", glm::vec3(1.0f, 0.0f, 0.0f));
+                _pointItem.Draw({ _program.Use() });
+            }
             glDisable(GL_DEPTH_TEST);
         }
         if (_onInit && ! _task.joinable()) {
@@ -139,19 +146,17 @@ namespace VCX::Labs::Rendering {
                         photon_pos.push_back(p.Origin);
                     _treeDirty = false;
                 }
-                _onInit = false;
             });
         }
 
-        if (! _treeDirty && _resizable) {
-            if (_task.joinable())
-                _task.join();
-            auto hist_span = std::span<const std::byte>(reinterpret_cast<const std::byte *>(photon_pos.data()), reinterpret_cast<const std::byte *>(photon_pos.data() + photon_pos.size()));
-            _pointItem.UpdateVertexBuffer("position", hist_span);
-            gl_using(_frame);
-            glPointSize(1.f);
-            _program.GetUniforms().SetByName("u_Color", glm::vec3(1.0f, 0.0f, 0.0f));
-            _pointItem.Draw({ _program.Use() });
+        if (! _treeDirty) {
+            if(_onInit) {
+                if (_task.joinable())
+                    _task.join();
+                auto hist_span = std::span<const std::byte>(reinterpret_cast<const std::byte *>(photon_pos.data()), reinterpret_cast<const std::byte *>(photon_pos.data() + photon_pos.size()));
+                _pointItem.UpdateVertexBuffer("position", hist_span);
+                _onInit = false;
+            }
         }
 
         if (! _stopFlag && ! _treeDirty && ! _task.joinable()) {
