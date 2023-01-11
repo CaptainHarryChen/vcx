@@ -6,8 +6,8 @@ namespace VCX::Labs::Rendering {
 
     App::App():
         _ui(Labs::Common::UIOptions {}),
-        _caseSimple({ ExampleScene::Floor, ExampleScene::CornellBox, ExampleScene::CornellBoxSphere, ExampleScene::SportsCar, ExampleScene::BreakfastRoom, ExampleScene::Sibenik, ExampleScene::Sponza }) {
-        // _caseSimple({ ExampleScene::CornellBoxSphere }) {
+        _caseSimple({ ExampleScene::Floor, ExampleScene::CornellBox, ExampleScene::CornellBoxSphere, ExampleScene::SportsCar, ExampleScene::BreakfastRoom, ExampleScene::Sibenik, ExampleScene::Sponza }),
+        _caseSepDirect({ ExampleScene::Floor, ExampleScene::CornellBox, ExampleScene::CornellBoxSphere, ExampleScene::SportsCar, ExampleScene::BreakfastRoom, ExampleScene::Sibenik, ExampleScene::Sponza }) {
     }
 
     void App::OnFrame() {

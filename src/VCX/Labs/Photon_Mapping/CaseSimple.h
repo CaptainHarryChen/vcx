@@ -14,7 +14,7 @@ namespace VCX::Labs::Rendering {
 
     class CaseSimple : public Common::ICase {
     public:
-        CaseSimple(std::initializer_list<Assets::ExampleScene> && scenes);
+        CaseSimple(const std::initializer_list<Assets::ExampleScene> & scenes);
         ~CaseSimple();
 
         virtual std::string_view const GetName() override { return "Simple Photon Mapping"; }
@@ -23,7 +23,7 @@ namespace VCX::Labs::Rendering {
         virtual Common::CaseRenderResult OnRender(std::pair<std::uint32_t, std::uint32_t> const desiredSize) override;
         virtual void                     OnProcessInput(ImVec2 const & pos) override;
 
-    private:
+    protected:
         std::vector<Assets::ExampleScene> const _scenes;
         Engine::GL::UniqueProgram               _program;
         Engine::GL::UniqueRenderFrame           _frame;
@@ -39,7 +39,9 @@ namespace VCX::Labs::Rendering {
         std::size_t      _sceneIdx { 0 };
         bool             _enableZoom { true };
         bool             _enableShadow { true };
-        int              _maximumDepth { 3 };
+        int              _maximumDepth { 30 };
+        int              _photonPerLight { 100000 };
+        int              _numNearPhoton { 200 };
         int              _superSampleRate { 1 };
         std::size_t      _pixelIndex { 0 };
         bool             _onInit { false };
