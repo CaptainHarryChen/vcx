@@ -1,4 +1,4 @@
-#include "Labs/Photon_Mapping/CaseSimple.h"
+#include "Labs/Photon_Mapping/CaseSepDirect.h"
 
 namespace VCX::Labs::Rendering {
 
@@ -22,84 +22,60 @@ namespace VCX::Labs::Rendering {
             ray.Direction = rayReflect.Direction;
         }
 
-        if (isDiffuse) {
-            color += weight * photonMapping.CollatePhotons(rayHit, -ray.Direction, numNearPhoton);
+        // Caculate dirrect light
+        glm::vec3 pos, n, kd, ks;
+        float     alpha, shininess;
+        pos       = rayHit.IntersectPosition;
+        n         = rayHit.IntersectNormal;
+        kd        = rayHit.IntersectAlbedo;
+        ks        = rayHit.IntersectMetaSpec;
+        alpha     = rayHit.IntersectAlbedo.w;
+        shininess = rayHit.IntersectMetaSpec.w * 256;
+
+        for (const Engine::Light & light : intersector.InternalScene->Lights) {
+            glm::vec3 l;
+            float     attenuation;
+            if (light.Type == Engine::LightType::Point) {
+                l           = light.Position - pos;
+                attenuation = 1.0f / glm::dot(l, l) / 4.0f / glm::pi<float>();
+                if (enableShadow) {
+                    auto shadowRayHit = intersector.IntersectRay(Ray(pos, glm::normalize(l)));
+                    if (shadowRayHit.IntersectState) {
+                        glm::vec3 sh = shadowRayHit.IntersectPosition - pos;
+                        if (glm::dot(sh, sh) < glm::dot(l, l))
+                            attenuation = 0.0f;
+                    }
+                }
+            } else if (light.Type == Engine::LightType::Directional) {
+                l           = light.Direction;
+                attenuation = 1.0f;
+                if (enableShadow) {
+                    auto shadowRayHit = intersector.IntersectRay(Ray(pos, glm::normalize(l)));
+                    if (shadowRayHit.IntersectState)
+                        attenuation = 0.0f;
+                }
+            }
+            glm::vec3 h         = glm::normalize(-ray.Direction + glm::normalize(l));
+            float     spec_coef = glm::pow(glm::max(glm::dot(h, n), 0.0f), shininess);
+            float     diff_coef = glm::max(glm::dot(glm::normalize(l), n), 0.0f);
+            color += light.Intensity * attenuation * (diff_coef * kd + spec_coef * ks);
         }
+
+        // culculate indirect light
+        if (isDiffuse)
+            color += weight * photonMapping.CollatePhotons(rayHit, -ray.Direction, numNearPhoton);
 
         return color;
     }
 
-    CaseSimple::CaseSimple(const std::initializer_list<Assets::ExampleScene> & scenes):
-        _scenes(scenes),
-        _program(
-            Engine::GL::UniqueProgram({ Engine::GL::SharedShader("assets/shaders/flat.vert"),
-                                        Engine::GL::SharedShader("assets/shaders/flat.frag") })),
-        _pointItem(Engine::GL::VertexLayout().Add<glm::vec3>("position", Engine::GL::DrawFrequency::Stream, 0), Engine::GL::PrimitiveType::Points),
-        _sceneObject(4),
-        _texture({ .MinFilter = Engine::GL::FilterMode::Linear, .MagFilter = Engine::GL::FilterMode::Nearest }) {
-        _cameraManager.AutoRotate = false;
-        _program.GetUniforms().SetByName("u_Color", glm::vec3(1, 1, 1));
+    CaseSepDirect::CaseSepDirect(const std::initializer_list<Assets::ExampleScene> & scenes):
+        CaseSimple(scenes) {
     }
 
-    CaseSimple::~CaseSimple() {
-        _stopFlag = true;
-        if (_task.joinable()) _task.join();
+    CaseSepDirect::~CaseSepDirect() {
     }
 
-    void CaseSimple::OnSetupPropsUI() {
-        if (ImGui::BeginCombo("Scene", GetSceneName(_sceneIdx))) {
-            for (std::size_t i = 0; i < _scenes.size(); ++i) {
-                bool selected = i == _sceneIdx;
-                if (ImGui::Selectable(GetSceneName(i), selected)) {
-                    if (! selected) {
-                        _sceneIdx   = i;
-                        _sceneDirty = true;
-                        _treeDirty  = true;
-                        _resetDirty = true;
-                    }
-                }
-            }
-            ImGui::EndCombo();
-        }
-        if (ImGui::Button("Reset Scene")) _resetDirty = true;
-        if (ImGui::Button("Initialize")) {
-            if (_treeDirty)
-                _onInit = true;
-        }
-        ImGui::ProgressBar(_treeDirty ? 0.0f : 1.0f);
-        if (_task.joinable()) {
-            if (ImGui::Button("Stop Rendering")) {
-                _stopFlag = true;
-                if (_task.joinable()) _task.join();
-            }
-        } else if (ImGui::Button("Start Rendering")) {
-            if (! _treeDirty)
-                _stopFlag = false;
-        }
-        ImGui::ProgressBar(float(_pixelIndex) / (_buffer.GetSizeX() * _buffer.GetSizeY()));
-        Common::ImGuiHelper::SaveImage(_texture, GetBufferSize(), true);
-        ImGui::Spacing();
-
-        if (ImGui::CollapsingHeader("Appearance", ImGuiTreeNodeFlags_DefaultOpen)) {
-            bool tmp = false;
-            tmp |= ImGui::SliderInt("Photon per Light", &_photonPerLight, 100000, 1000000);
-            _resetDirty |= tmp;
-            _treeDirty |= tmp;
-            _resetDirty |= ImGui::SliderInt("Nearest K Photon", &_numNearPhoton, 1, 1000);
-            _resetDirty |= ImGui::SliderInt("Sample Rate", &_superSampleRate, 1, 5);
-            _resetDirty |= ImGui::SliderInt("Max Depth", &_maximumDepth, 1, 15);
-            _resetDirty |= ImGui::SliderFloat("Gamma", &_gamma, 1.0f, 10.0f);
-            _resetDirty |= ImGui::Checkbox("Shadow Ray", &_enableShadow);
-        }
-        ImGui::Spacing();
-
-        if (ImGui::CollapsingHeader("Control")) {
-            ImGui::Checkbox("Zoom Tooltip", &_enableZoom);
-        }
-        ImGui::Spacing();
-    }
-
-    Common::CaseRenderResult CaseSimple::OnRender(std::pair<std::uint32_t, std::uint32_t> const desiredSize) {
+    Common::CaseRenderResult CaseSepDirect::OnRender(std::pair<std::uint32_t, std::uint32_t> const desiredSize) {
         if (_resetDirty) {
             _stopFlag = true;
             if (_task.joinable()) _task.join();
@@ -140,7 +116,7 @@ namespace VCX::Labs::Rendering {
                 if (_pixelIndex == 0 && _treeDirty) {
                     Engine::Scene const & scene = GetScene(_sceneIdx);
                     _intersector.InitScene(&scene);
-                    _photonmapping.InitScene(&scene, _intersector, true, _photonPerLight);
+                    _photonmapping.InitScene(&scene, _intersector, false);
 
                     photon_pos.clear();
                     for (const auto & p : _photonmapping.photons)
@@ -210,24 +186,4 @@ namespace VCX::Labs::Rendering {
             .ImageSize = _resizable ? desiredSize : GetBufferSize(),
         };
     }
-
-    void CaseSimple::OnProcessInput(ImVec2 const & pos) {
-        auto         window  = ImGui::GetCurrentWindow();
-        bool         hovered = false;
-        bool         anyHeld = false;
-        ImVec2 const delta   = ImGui::GetIO().MouseDelta;
-        ImGui::ButtonBehavior(window->Rect(), window->GetID("##io"), &hovered, &anyHeld);
-        if (! hovered) return;
-        if (_resizable) {
-            _cameraManager.ProcessInput(_sceneObject.Camera, pos);
-        } else {
-            if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && delta.x != 0.f)
-                ImGui::SetScrollX(window, window->Scroll.x - delta.x);
-            if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && delta.y != 0.f)
-                ImGui::SetScrollY(window, window->Scroll.y - delta.y);
-        }
-        if (_enableZoom && ! anyHeld && ImGui::IsItemHovered())
-            Common::ImGuiHelper::ZoomTooltip(_resizable ? _frame.GetColorAttachment() : _texture, GetBufferSize(), pos, true);
-    }
-
 } // namespace VCX::Labs::Rendering

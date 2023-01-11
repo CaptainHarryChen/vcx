@@ -2,7 +2,7 @@
 
 namespace VCX::Labs::Rendering {
 
-    void PhotonMapping::InitScene(Engine::Scene const * scene, const RayIntersector & intersector, int nEmittedPhotons, float P_RR) {
+    void PhotonMapping::InitScene(Engine::Scene const * scene, const RayIntersector & intersector, bool useDirect, int nEmittedPhotons, float P_RR) {
         static std::mt19937                   rand_e;
         std::uniform_real_distribution<float> uni01(0, 1);
         InternalScene = scene;
@@ -14,10 +14,11 @@ namespace VCX::Labs::Rendering {
                 if (light.Type == Engine::LightType::Point) {
                     p.Origin    = light.Position;
                     p.Direction = RandomDirection();
-                    p.Power     = light.Intensity;
+                    p.Power     = light.Intensity / glm::vec3(nEmittedPhotons);
                 } else if (light.Type == Engine::LightType::Directional) {
                     // Todo
                 }
+                bool isIndirect = false;
                 while (true) {
                     ray           = Ray(p.Origin, p.Direction);
                     RayHit rayHit = intersector.IntersectRay(ray);
@@ -26,8 +27,11 @@ namespace VCX::Labs::Rendering {
                     RayReflect rayReflect = DirectionFromBSDF(ray, rayHit);
                     if (rayReflect.Type == ReflectType::None) // Don't need reflection or refraction
                         break;
-                    if (rayReflect.Type == ReflectType::Diffuse)
-                        photons.emplace_back(rayHit.IntersectPosition, p.Direction, p.Power);
+                    if (rayReflect.Type == ReflectType::Diffuse) {
+                        if (useDirect || isIndirect)
+                            photons.emplace_back(rayHit.IntersectPosition, p.Direction, p.Power);
+                        isIndirect = true;
+                    }
                     if (uni01(rand_e) > P_RR) // Russian Roulette: stop
                         break;
                     Photon next_p = Photon(rayHit.IntersectPosition, rayReflect.Direction, p.Power * rayReflect.Attenuation);
@@ -39,6 +43,8 @@ namespace VCX::Labs::Rendering {
     }
 
     glm::vec3 PhotonMapping::CollatePhotons(const RayHit & rayHit, const glm::vec3 & out_dir, int numPhotons) const {
+        if (photons.size() == 0)
+            return glm::vec3(0.0f);
         std::vector<Photon> near_photons;
         tree.NearestKPhotons(rayHit.IntersectPosition, numPhotons, near_photons);
 
@@ -57,7 +63,7 @@ namespace VCX::Labs::Rendering {
             float     diff_coef = glm::max(glm::dot(out_dir, n), 0.0f);
             flux += p.Power * (diff_coef * kd + spec_coef * ks);
         }
-        flux /= (glm::pi<float>() * radius2 * photons.size());
+        flux /= (glm::pi<float>() * radius2);
         return flux;
     }
 
