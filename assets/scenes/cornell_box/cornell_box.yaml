@@ -12,7 +12,7 @@ Cameras:
 Lights:
   - Type: Point
     Position: [278, 520, 279.5]
-    Intensity: [100000, 100000, 100000]
+    Intensity: [1000000, 1000000, 1000000]
 
 Materials:
   - Name: wall

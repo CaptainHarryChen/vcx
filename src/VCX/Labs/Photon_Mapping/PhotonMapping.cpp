@@ -30,7 +30,7 @@ namespace VCX::Labs::Rendering {
                         photons.emplace_back(rayHit.IntersectPosition, p.Direction, p.Power);
                     if (uni01(rand_e) > P_RR) // Russian Roulette: stop
                         break;
-                    Photon next_p = Photon(rayHit.IntersectPosition, p.Direction, p.Power * rayReflect.Attenuation);
+                    Photon next_p = Photon(rayHit.IntersectPosition, rayReflect.Direction, p.Power * rayReflect.Attenuation);
                     p             = next_p;
                 }
             }

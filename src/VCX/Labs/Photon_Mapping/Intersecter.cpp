@@ -73,14 +73,14 @@ namespace VCX::Labs::Rendering {
             glm::vec3 h         = glm::normalize(-ray.Direction + dir);
             float     spec_coef = glm::pow(glm::max(glm::dot(h, n), 0.0f), shininess);
             float     diff_coef = glm::max(glm::dot(dir, n), 0.0f);
-            res.Attenuation     = (diff_coef * kd + spec_coef * ks);
+            res.Attenuation     = (diff_coef * kd + spec_coef * ks) * 2.0f * glm::pi<float>();
             res.Direction       = dir;
         } else if (rayHit.IntersectMode == Engine::BlendMode::Reflect || rayHit.IntersectMode == Engine::BlendMode::ReflectNoFresnel) {
             res.Type        = ReflectType::Specular;
             res.Direction   = ray.Direction - glm::vec3(2.0f) * n * glm::dot(n, ray.Direction);
             res.Attenuation = ks;
-        } else if (rayHit.IntersectMode == Engine::BlendMode::Transparent || rayHit.IntersectMode == Engine::BlendMode::TransparentGlass || rayHit.IntersectMode == Engine::BlendMode::TransparentNoFresnel) {
-            // Todo: random choose to reflect or transmit
+        } else if (rayHit.IntersectMode == Engine::BlendMode::Transparent || rayHit.IntersectMode == Engine::BlendMode::TransparentGlass || rayHit.IntersectMode == Engine::BlendMode::TransparentNoFresnel || rayHit.IntersectMode == Engine::BlendMode::TransparentNoReflect) {
+            // Todo: random choose reflect or refract
             float     ior    = 1.0f / Ior;
             glm::vec3 normal = n;
             if (glm::dot(ray.Direction, n) > 0.f) {
@@ -91,20 +91,7 @@ namespace VCX::Labs::Rendering {
             float     cost2 = 1.0f - ior * ior * (1.0f - cosi * cosi);
             glm::vec3 t     = ray.Direction * ior + normal * (ior * cosi - sqrt(fabs(cost2)));
             res.Type        = ReflectType::Refraction;
-            res.Direction   = (cost2 > 0) ? t : glm::vec3(0.0f);
-            res.Attenuation = tr;
-        } else if (rayHit.IntersectMode == Engine::BlendMode::TransparentNoReflect) {
-            float     ior    = 1.0f / Ior;
-            glm::vec3 normal = n;
-            if (glm::dot(ray.Direction, n) > 0.f) {
-                ior    = 1.0f / ior;
-                normal = -n;
-            }
-            float     cosi  = glm::dot(-ray.Direction, normal);
-            float     cost2 = 1.0f - ior * ior * (1.0f - cosi * cosi);
-            glm::vec3 t     = ray.Direction * ior + normal * (ior * cosi - sqrt(fabs(cost2)));
-            res.Type        = ReflectType::Refraction;
-            res.Direction   = (cost2 > 0) ? t : glm::vec3(0.0f);
+            res.Direction   = cost2 > 0 ? t : glm::vec3(0.0f);
             res.Attenuation = tr;
         } else {
             res.Type = ReflectType::None;
