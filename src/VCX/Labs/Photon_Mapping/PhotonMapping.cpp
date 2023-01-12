@@ -40,6 +40,22 @@ namespace VCX::Labs::Rendering {
             }
         }
         tree.Build(photons);
+        // debug
+        // glm::vec3 sum(0.0f);
+        // for(auto &p : photons) {
+        //     float thr = 350.0f;
+        //     sum += p.Power;
+        //     if(p.Power[0] > thr || p.Power[1] > thr || p.Power[2] > thr) {
+        //         printf("(%f, %f, %f)\n",p.Power[0],p.Power[1],p.Power[2]);
+        //     }
+        // }
+        // sum = sum / (1.0f * photons.size());
+        // printf("avg: (%f, %f, %f)\n",sum[0],sum[1],sum[2]);
+        // glm::vec3 li = InternalScene->Lights[0].Intensity;
+        // printf("light: (%f, %f, %f)\n",li[0],li[1],li[2]);
+        // printf("num: %d\n", nEmittedPhotons);
+        // li = li / (1.0f * nEmittedPhotons);
+        // printf("initial: (%f, %f, %f)\n",li[0],li[1],li[2]);
     }
 
     glm::vec3 PhotonMapping::CollatePhotons(const RayHit & rayHit, const glm::vec3 & out_dir, int numPhotons) const {

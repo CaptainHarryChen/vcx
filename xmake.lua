@@ -65,7 +65,7 @@ target("lab-common")
     add_headerfiles("src/VCX/Labs/Common/*.h")
     add_files      ("src/VCX/Labs/Common/*.cpp")
 
-target("lab3")
+target("photon_mapping")
     set_kind("binary")
     add_deps("lab-common")
     add_headerfiles("src/VCX/Labs/Photon_Mapping/*.h")

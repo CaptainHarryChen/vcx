@@ -42,6 +42,7 @@ namespace VCX::Labs::Rendering {
         float                                 u = uni(e), v = uni(e);
         float                                 theta = 2.0f * std::_Pi * u;
         float                                 phi   = acos(2.0f * v - 1);
+        // assert(glm::abs(glm::length(glm::vec3(sin(theta) * sin(phi), cos(theta) * sin(phi), cos(phi))) - 1.0f) < 1e-2f);
         return glm::vec3(sin(theta) * sin(phi), cos(theta) * sin(phi), cos(phi));
     }
 
@@ -50,6 +51,7 @@ namespace VCX::Labs::Rendering {
         float     d   = glm::dot(res, normal);
         if (d < 0.0f)
             res -= normal * d * 2.0f;
+        // assert(glm::abs(glm::length(res) - 1.0f) < 1e-2);
         return res;
     }
 
@@ -73,7 +75,7 @@ namespace VCX::Labs::Rendering {
             glm::vec3 h         = glm::normalize(-ray.Direction + dir);
             float     spec_coef = glm::pow(glm::max(glm::dot(h, n), 0.0f), shininess);
             float     diff_coef = glm::max(glm::dot(dir, n), 0.0f);
-            res.Attenuation     = (diff_coef * kd + spec_coef * ks) * 2.0f * glm::pi<float>();
+            res.Attenuation     = (diff_coef * kd + spec_coef * ks) * 2.0f; // probability density is 1/2pi, but the bsdf has a 1/pi
             res.Direction       = dir;
         } else if (rayHit.IntersectMode == Engine::BlendMode::Reflect || rayHit.IntersectMode == Engine::BlendMode::ReflectNoFresnel) {
             res.Type        = ReflectType::Specular;
@@ -96,6 +98,8 @@ namespace VCX::Labs::Rendering {
         } else {
             res.Type = ReflectType::None;
         }
+        // if(res.Attenuation[0] > 3.0f || res.Attenuation[1] > 3.0f || res.Attenuation[2] > 3.0f)
+        //     printf("abnormal attenuation: (%f, %f, %f)\n",res.Attenuation.x, res.Attenuation.y, res.Attenuation.z);
         return res;
     }
 
