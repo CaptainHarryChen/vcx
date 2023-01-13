@@ -62,6 +62,8 @@ namespace VCX::Engine {
         glm::vec3 Intensity { 1, 1, 1 };
         glm::vec3 Direction { 1, 0, 0 };
         glm::vec3 Position { 0, 0, 0 };
+        glm::vec3 Position2 { 0, 0, 0 };
+        glm::vec3 Position3 { 0, 0, 0 };
         float     CutOff { 0 };
         float     OuterCutOff { 0 };
     };

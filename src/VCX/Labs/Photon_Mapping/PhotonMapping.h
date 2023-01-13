@@ -134,6 +134,7 @@ namespace VCX::Labs::Rendering {
 
         PhotonMapping() = default;
 
+        Photon    GeneratePhoton(Engine::Light light, int totalNum);
         void      InitScene(Engine::Scene const * scene, const RayIntersector & intersector, bool useDirect, int nEmittedPhotons = 300000, float P_RR = 0.7f);
         void      InitCaustic(Engine::Scene const * scene, const RayIntersector & intersector, int nEmittedPhotons = 300000, float P_RR = 0.7f);
         glm::vec3 CollatePhotons(const RayHit & rayHit, const glm::vec3 & out_dir, int numPhotons = 600, float mx_dis = -1) const;

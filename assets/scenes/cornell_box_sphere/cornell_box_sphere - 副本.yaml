@@ -10,15 +10,8 @@ Cameras:
     ZFar: 10
 
 Lights:
-  - Type: Area
+  - Type: Point
     Position: [-0.2, 1.58, 0.2]
-    Position2: [-0.2, 1.58, -0.2]
-    Position3: [0.2, 1.58, -0.2]
-    Intensity: [1, 1, 1]
-  - Type: Area
-    Position: [-0.2, 1.58, 0.2]
-    Position2: [0.2, 1.58, -0.2]
-    Position3: [0.2, 1.58, 0.2]
     Intensity: [1, 1, 1]
     
 
