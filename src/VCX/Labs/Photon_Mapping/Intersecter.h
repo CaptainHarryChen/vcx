@@ -28,6 +28,7 @@ namespace VCX::Labs::Rendering {
 
     enum class ReflectType {
         None,
+        Set,
         Diffuse,
         Specular,
         Refraction,
@@ -43,11 +44,6 @@ namespace VCX::Labs::Rendering {
     glm::vec4 GetAlbedo(Engine::Material const & material, glm::vec2 const & uvCoord);
 
     bool IntersectTriangle(Intersection & output, Ray const & ray, glm::vec3 const & p1, glm::vec3 const & p2, glm::vec3 const & p3);
-
-    glm::vec3 RandomDirection();
-    glm::vec3 RandomHemiDirection(const glm::vec3 & normal);
-
-    RayReflect DirectionFromBSDF(const Ray & ray, const RayHit & rayHit);
 
     struct TrivialRayIntersector {
         Engine::Scene const * InternalScene = nullptr;
@@ -340,5 +336,11 @@ namespace VCX::Labs::Rendering {
     };
 
     using RayIntersector = BVHRayIntersector;
+
+    glm::vec3 RandomDirection();
+    glm::vec3 RandomHemiDirection(const glm::vec3 & normal);
+
+    RayReflect DirectionFromBSDF(const Ray & ray, const RayHit & rayHit);
+    glm::vec3  DirectLight(const RayIntersector & intersector, const Ray & ray, const RayHit & rayHit, bool enableShadow);
 
 } // namespace VCX::Labs::Rendering

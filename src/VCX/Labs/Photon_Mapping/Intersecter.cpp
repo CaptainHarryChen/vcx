@@ -75,7 +75,10 @@ namespace VCX::Labs::Rendering {
         glm::vec3 tr        = rayHit.IntersectTrans;
 
         RayReflect res;
-        if (rayHit.IntersectMode == Engine::BlendMode::Phong) {
+        if (rayHit.IntersectMode == Engine::BlendMode::ColorOnly) {
+            res.Type        = ReflectType::Set;
+            res.Attenuation = kd;
+        } else if (rayHit.IntersectMode == Engine::BlendMode::Phong) {
             res.Type            = ReflectType::Diffuse;
             glm::vec3 dir       = RandomHemiDirection(n);
             glm::vec3 h         = glm::normalize(-ray.Direction + dir);
@@ -96,9 +99,9 @@ namespace VCX::Labs::Rendering {
                 normal = -n;
             }
             float cosi         = glm::dot(-ray.Direction, normal);
-            float cost2 = 1.0f - ior * ior * (1.0f - cosi * cosi);
+            float cost2        = 1.0f - ior * ior * (1.0f - cosi * cosi);
             float reflect_prob = 0.0f;
-            if(ior < 1.0f)
+            if (ior < 1.0f)
                 reflect_prob = cost2 <= 0.0f ? 1.0f : schlick(cosi, ior);
             if (uni01(e) <= reflect_prob) {
                 res.Type        = ReflectType::Specular;
@@ -116,6 +119,69 @@ namespace VCX::Labs::Rendering {
         // if(res.Attenuation[0] > 3.0f || res.Attenuation[1] > 3.0f || res.Attenuation[2] > 3.0f)
         //     printf("abnormal attenuation: (%f, %f, %f)\n",res.Attenuation.x, res.Attenuation.y, res.Attenuation.z);
         return res;
+    }
+
+    glm::vec3 DirectLight(const RayIntersector & intersector, const Ray & ray, const RayHit & rayHit, bool enableShadow) {
+        static std::mt19937                   rand_e;
+        std::uniform_real_distribution<float> uni01(0, 1);
+
+        glm::vec3 pos, n, kd, ks;
+        float     alpha, shininess;
+        pos       = rayHit.IntersectPosition;
+        n         = rayHit.IntersectNormal;
+        kd        = rayHit.IntersectAlbedo;
+        ks        = rayHit.IntersectMetaSpec;
+        alpha     = rayHit.IntersectAlbedo.w;
+        shininess = rayHit.IntersectMetaSpec.w * 256;
+
+        glm::vec3 color = glm::vec3(0.0f);
+        for (const Engine::Light & light : intersector.InternalScene->Lights) {
+            glm::vec3 l;
+            float     attenuation;
+            if (light.Type == Engine::LightType::Point) {
+                l           = light.Position - pos;
+                attenuation = 1.0f / glm::dot(l, l) / 4.0f / glm::pi<float>();
+                if (enableShadow) {
+                    auto shadowRayHit = intersector.IntersectRay(Ray(pos, glm::normalize(l)));
+                    if (shadowRayHit.IntersectState) {
+                        glm::vec3 sh = shadowRayHit.IntersectPosition - pos;
+                        if (glm::dot(sh, sh) + 1e-2 < glm::dot(l, l))
+                            attenuation = 0.0f;
+                    }
+                }
+            } else if (light.Type == Engine::LightType::Directional) {
+                l           = light.Direction;
+                attenuation = 1.0f;
+                if (enableShadow) {
+                    auto shadowRayHit = intersector.IntersectRay(Ray(pos, glm::normalize(l)));
+                    if (shadowRayHit.IntersectState)
+                        attenuation = 0.0f;
+                }
+            } else if (light.Type == Engine::LightType::Area) {
+                glm::vec3 normal = glm::cross(light.Position2 - light.Position, light.Position3 - light.Position);
+                // float area = glm::length(normal);
+                normal  = glm::normalize(normal);
+                float u = uni01(rand_e), v = uni01(rand_e);
+                if (u + v > 1.0f)
+                    u = 1 - u, v = 1 - v;
+                glm::vec3 lightPos = (1 - u - v) * light.Position + u * light.Position2 + v * light.Position3;
+                l                  = lightPos - pos;
+                attenuation        = 1.0f / glm::dot(l, l) * glm::max(glm::dot(-l, normal), 0.0f) / glm::pi<float>();
+                if (enableShadow) {
+                    auto shadowRayHit = intersector.IntersectRay(Ray(pos, glm::normalize(l)));
+                    if (shadowRayHit.IntersectState) {
+                        glm::vec3 sh = shadowRayHit.IntersectPosition - pos;
+                        if (glm::dot(sh, sh) + 1e-2 < glm::dot(l, l))
+                            attenuation = 0.0f;
+                    }
+                }
+            }
+            glm::vec3 h         = glm::normalize(-ray.Direction + glm::normalize(l));
+            float     spec_coef = glm::pow(glm::max(glm::dot(h, n), 0.0f), shininess);
+            float     diff_coef = glm::max(glm::dot(glm::normalize(l), n), 0.0f);
+            color += light.Intensity * attenuation * (diff_coef * kd + spec_coef * ks);
+        }
+        return color;
     }
 
 } // namespace VCX::Labs::Rendering

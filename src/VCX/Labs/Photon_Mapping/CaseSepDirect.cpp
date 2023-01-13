@@ -3,6 +3,9 @@
 namespace VCX::Labs::Rendering {
 
     static glm::vec3 RayTrace(const PhotonMapping & photonMapping, const RayIntersector & intersector, Ray ray, int maxDepth, bool enableShadow, int numNearPhoton) {
+        static std::mt19937                   rand_e;
+        std::uniform_real_distribution<float> uni01(0, 1);
+        
         glm::vec3 color(0.0f);
         glm::vec3 weight(1.0f);
 
@@ -17,49 +20,15 @@ namespace VCX::Labs::Rendering {
                 break;
             }
             RayReflect rayReflect = DirectionFromBSDF(ray, rayHit);
+            if(rayReflect.Type == ReflectType::Set)
+                return rayReflect.Attenuation;
             weight *= rayReflect.Attenuation;
             ray.Origin    = rayHit.IntersectPosition;
             ray.Direction = rayReflect.Direction;
         }
 
         // Caculate dirrect light
-        glm::vec3 pos, n, kd, ks;
-        float     alpha, shininess;
-        pos       = rayHit.IntersectPosition;
-        n         = rayHit.IntersectNormal;
-        kd        = rayHit.IntersectAlbedo;
-        ks        = rayHit.IntersectMetaSpec;
-        alpha     = rayHit.IntersectAlbedo.w;
-        shininess = rayHit.IntersectMetaSpec.w * 256;
-
-        for (const Engine::Light & light : intersector.InternalScene->Lights) {
-            glm::vec3 l;
-            float     attenuation;
-            if (light.Type == Engine::LightType::Point) {
-                l           = light.Position - pos;
-                attenuation = 1.0f / glm::dot(l, l) / 4.0f / glm::pi<float>();
-                if (enableShadow) {
-                    auto shadowRayHit = intersector.IntersectRay(Ray(pos, glm::normalize(l)));
-                    if (shadowRayHit.IntersectState) {
-                        glm::vec3 sh = shadowRayHit.IntersectPosition - pos;
-                        if (glm::dot(sh, sh) < glm::dot(l, l))
-                            attenuation = 0.0f;
-                    }
-                }
-            } else if (light.Type == Engine::LightType::Directional) {
-                l           = light.Direction;
-                attenuation = 1.0f;
-                if (enableShadow) {
-                    auto shadowRayHit = intersector.IntersectRay(Ray(pos, glm::normalize(l)));
-                    if (shadowRayHit.IntersectState)
-                        attenuation = 0.0f;
-                }
-            }
-            glm::vec3 h         = glm::normalize(-ray.Direction + glm::normalize(l));
-            float     spec_coef = glm::pow(glm::max(glm::dot(h, n), 0.0f), shininess);
-            float     diff_coef = glm::max(glm::dot(glm::normalize(l), n), 0.0f);
-            color += light.Intensity * attenuation * (diff_coef * kd + spec_coef * ks);
-        }
+        color += DirectLight(intersector, ray, rayHit, enableShadow);
 
         // culculate indirect light
         if (isDiffuse)

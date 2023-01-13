@@ -17,6 +17,8 @@ namespace VCX::Labs::Rendering {
                 break;
             }
             RayReflect rayReflect = DirectionFromBSDF(ray, rayHit);
+            if(rayReflect.Type == ReflectType::Set)
+                return rayReflect.Attenuation;
             weight *= rayReflect.Attenuation;
             ray.Origin    = rayHit.IntersectPosition;
             ray.Direction = rayReflect.Direction;

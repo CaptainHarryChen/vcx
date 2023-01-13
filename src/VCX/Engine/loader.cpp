@@ -361,6 +361,8 @@ namespace VCX::Engine {
                 SetValue(light.Direction  , lightNode["Direction"]);
                 light.Direction = glm::normalize(light.Direction);
                 SetValue(light.Position   , lightNode["Position"]);
+                SetValue(light.Position2  , lightNode["Position2"]);
+                SetValue(light.Position3  , lightNode["Position3"]);
                 SetValue(light.CutOff     , lightNode["CutOff"]);
                 SetValue(light.OuterCutOff, lightNode["OuterCutOff"]);
                 scene.Lights.push_back(std::move(light));

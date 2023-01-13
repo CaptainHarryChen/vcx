@@ -2,6 +2,31 @@
 
 namespace VCX::Labs::Rendering {
 
+    Photon PhotonMapping::GeneratePhoton(Engine::Light light, int totalNum) {
+        static std::mt19937                   rand_e;
+        std::uniform_real_distribution<float> uni01(0, 1);
+        Photon                                p;
+        Ray                                   ray;
+        if (light.Type == Engine::LightType::Point) {
+            p.Origin    = light.Position;
+            p.Direction = RandomDirection();
+            p.Power     = light.Intensity / glm::vec3(totalNum);
+        } else if (light.Type == Engine::LightType::Directional) {
+            // Todo
+        } else if (light.Type == Engine::LightType::Area) {
+            glm::vec3 normal = glm::cross(light.Position2 - light.Position, light.Position3 - light.Position);
+            float area = glm::length(normal);
+            normal           = glm::normalize(normal);
+            float u = uni01(rand_e), v = uni01(rand_e);
+            if (u + v > 1.0f)
+                u = 1 - u, v = 1 - v;
+            p.Origin    = (1 - u - v) * light.Position + u * light.Position2 + v * light.Position3;
+            p.Direction = RandomHemiDirection(normal);
+            p.Power     = light.Intensity / glm::vec3(totalNum) * glm::dot(normal, p.Direction) * 2.0f;
+        }
+        return p;
+    }
+
     void PhotonMapping::InitScene(Engine::Scene const * scene, const RayIntersector & intersector, bool useDirect, int nEmittedPhotons, float P_RR) {
         static std::mt19937                   rand_e;
         std::uniform_real_distribution<float> uni01(0, 1);
@@ -9,16 +34,9 @@ namespace VCX::Labs::Rendering {
         photons.clear();
         for (const Engine::Light & light : InternalScene->Lights) {
             for (int i = 0; i < nEmittedPhotons; i++) {
-                Photon p;
+                Photon p = GeneratePhoton(light, nEmittedPhotons);
                 Ray    ray;
-                if (light.Type == Engine::LightType::Point) {
-                    p.Origin    = light.Position;
-                    p.Direction = RandomDirection();
-                    p.Power     = light.Intensity / glm::vec3(nEmittedPhotons);
-                } else if (light.Type == Engine::LightType::Directional) {
-                    // Todo
-                }
-                bool isIndirect = false;
+                bool   isIndirect = false;
                 while (true) {
                     ray           = Ray(p.Origin, p.Direction);
                     RayHit rayHit = intersector.IntersectRay(ray);
@@ -65,15 +83,8 @@ namespace VCX::Labs::Rendering {
         photons.clear();
         for (const Engine::Light & light : InternalScene->Lights) {
             for (int i = 0; i < nEmittedPhotons; i++) {
-                Photon p;
+                Photon p = GeneratePhoton(light, nEmittedPhotons);
                 Ray    ray;
-                if (light.Type == Engine::LightType::Point) {
-                    p.Origin    = light.Position;
-                    p.Direction = RandomDirection();
-                    p.Power     = light.Intensity / glm::vec3(nEmittedPhotons);
-                } else if (light.Type == Engine::LightType::Directional) {
-                    // Todo
-                }
                 bool isCaustic = false;
                 while (true) {
                     ray           = Ray(p.Origin, p.Direction);
