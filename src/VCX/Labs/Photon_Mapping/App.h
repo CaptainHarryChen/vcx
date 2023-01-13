@@ -4,6 +4,7 @@
 
 #include "Engine/app.h"
 #include "Labs/Common/UI.h"
+#include "Labs/Photon_Mapping/CaseCaustic.h"
 #include "Labs/Photon_Mapping/CaseSepDirect.h"
 #include "Labs/Photon_Mapping/CaseSimple.h"
 
@@ -14,12 +15,14 @@ namespace VCX::Labs::Rendering {
 
         CaseSimple    _caseSimple;
         CaseSepDirect _caseSepDirect;
+        CaseCaustic   _caseCaustic;
 
         std::size_t _caseId = 0;
 
         std::vector<std::reference_wrapper<Common::ICase>> _cases = {
             _caseSimple,
-            _caseSepDirect
+            _caseSepDirect,
+            _caseCaustic
         };
 
     public:

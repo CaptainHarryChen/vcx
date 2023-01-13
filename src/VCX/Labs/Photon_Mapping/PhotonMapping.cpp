@@ -58,11 +58,53 @@ namespace VCX::Labs::Rendering {
         // printf("initial: (%f, %f, %f)\n",li[0],li[1],li[2]);
     }
 
-    glm::vec3 PhotonMapping::CollatePhotons(const RayHit & rayHit, const glm::vec3 & out_dir, int numPhotons) const {
+    void PhotonMapping::InitCaustic(Engine::Scene const * scene, const RayIntersector & intersector, int nEmittedPhotons, float P_RR) {
+        static std::mt19937                   rand_e;
+        std::uniform_real_distribution<float> uni01(0, 1);
+        InternalScene = scene;
+        photons.clear();
+        for (const Engine::Light & light : InternalScene->Lights) {
+            for (int i = 0; i < nEmittedPhotons; i++) {
+                Photon p;
+                Ray    ray;
+                if (light.Type == Engine::LightType::Point) {
+                    p.Origin    = light.Position;
+                    p.Direction = RandomDirection();
+                    p.Power     = light.Intensity / glm::vec3(nEmittedPhotons);
+                } else if (light.Type == Engine::LightType::Directional) {
+                    // Todo
+                }
+                bool isCaustic = false;
+                while (true) {
+                    ray           = Ray(p.Origin, p.Direction);
+                    RayHit rayHit = intersector.IntersectRay(ray);
+                    if (! rayHit.IntersectState) // No intersection
+                        break;
+                    RayReflect rayReflect = DirectionFromBSDF(ray, rayHit);
+                    if (rayReflect.Type == ReflectType::None) // Don't need reflection or refraction
+                        break;
+                    if (rayReflect.Type == ReflectType::Specular || rayReflect.Type == ReflectType::Refraction)
+                        isCaustic = true;
+                    if (rayReflect.Type == ReflectType::Diffuse) {
+                        if (isCaustic)
+                            photons.emplace_back(rayHit.IntersectPosition, p.Direction, p.Power);
+                        break;
+                    }
+                    if (uni01(rand_e) > P_RR) // Russian Roulette: stop
+                        break;
+                    Photon next_p = Photon(rayHit.IntersectPosition, rayReflect.Direction, p.Power * rayReflect.Attenuation);
+                    p             = next_p;
+                }
+            }
+        }
+        tree.Build(photons);
+    }
+
+    glm::vec3 PhotonMapping::CollatePhotons(const RayHit & rayHit, const glm::vec3 & out_dir, int numPhotons, float mx_dis) const {
         if (photons.size() == 0)
             return glm::vec3(0.0f);
         std::vector<Photon> near_photons;
-        tree.NearestKPhotons(rayHit.IntersectPosition, numPhotons, near_photons);
+        tree.NearestKPhotons(rayHit.IntersectPosition, numPhotons, near_photons, mx_dis);
 
         float     shininess = rayHit.IntersectMetaSpec.w;
         glm::vec3 n         = rayHit.IntersectNormal;

@@ -41,7 +41,7 @@ namespace VCX::Labs::Rendering {
 
         static const int    nDims = 3;
         std::vector<Photon> internelPhotons;
-        Node *              root = nullptr;
+        Node *              root             = nullptr;
 
         void BuildTree(Node *& u, int L, int R, int dep) {
             if (L >= R)
@@ -60,39 +60,41 @@ namespace VCX::Labs::Rendering {
             BuildTree(u->son[0], L, mid, dep + 1);
             BuildTree(u->son[1], mid + 1, R, dep + 1);
         }
-        void CheckAndAdd(const glm::vec3 & pos, Photon * p, int K, NearestQueue & Q) const {
+        void CheckAndAdd(const glm::vec3 & pos, Photon * p, int K, NearestQueue & Q, float mx_dis) const {
             if (Q.size() < K) {
-                Q.push(disNode(glm::dot(pos - p->Origin, pos - p->Origin), p));
+                float dis2 = glm::dot(pos - p->Origin, pos - p->Origin);
+                if(mx_dis < 0 || dis2 <= mx_dis * mx_dis)
+                    Q.push(disNode(dis2, p));
                 return;
             }
-            float mx   = Q.top().dis;
+            float mx   = Q.empty() ? mx_dis : Q.top().dis;
             float dis2 = glm::dot(pos - p->Origin, pos - p->Origin);
             if (dis2 < mx) {
                 Q.pop();
                 Q.push(disNode(dis2, p));
             }
         }
-        void FindNearestKPhotons(Node * u, int L, int R, int dep, const glm::vec3 & pos, int K, NearestQueue & Q) const {
+        void FindNearestKPhotons(Node * u, int L, int R, int dep, const glm::vec3 & pos, int K, NearestQueue & Q, float mx_dis) const {
             if (L >= R)
                 return;
             if (R - L == 1) {
-                CheckAndAdd(pos, u->p, K, Q);
+                CheckAndAdd(pos, u->p, K, Q, mx_dis);
                 return;
             }
             int mid  = (L + R) / 2;
             int axis = dep % nDims;
             if (pos[axis] <= u->p->Origin[axis])
-                FindNearestKPhotons(u->son[0], L, mid, dep + 1, pos, K, Q);
+                FindNearestKPhotons(u->son[0], L, mid, dep + 1, pos, K, Q, mx_dis);
             else
-                FindNearestKPhotons(u->son[1], mid + 1, R, dep + 1, pos, K, Q);
-            CheckAndAdd(pos, u->p, K, Q);
-            float mx   = Q.top().dis;
+                FindNearestKPhotons(u->son[1], mid + 1, R, dep + 1, pos, K, Q, mx_dis);
+            CheckAndAdd(pos, u->p, K, Q, mx_dis);
+            float mx   = Q.empty() ? mx_dis : Q.top().dis;
             float dis2 = (u->p->Origin[axis] - pos[axis]) * (u->p->Origin[axis] - pos[axis]);
             if (Q.size() < K || mx >= dis2) {
                 if (pos[axis] > u->p->Origin[axis])
-                    FindNearestKPhotons(u->son[0], L, mid, dep + 1, pos, K, Q);
+                    FindNearestKPhotons(u->son[0], L, mid, dep + 1, pos, K, Q, mx_dis);
                 else
-                    FindNearestKPhotons(u->son[1], mid + 1, R, dep + 1, pos, K, Q);
+                    FindNearestKPhotons(u->son[1], mid + 1, R, dep + 1, pos, K, Q, mx_dis);
             }
         }
 
@@ -115,9 +117,9 @@ namespace VCX::Labs::Rendering {
             internelPhotons = photons;
             BuildTree(root, 0, internelPhotons.size(), 0);
         }
-        void NearestKPhotons(const glm::vec3 & pos, int K, std::vector<Photon> & ans) const {
+        void NearestKPhotons(const glm::vec3 & pos, int K, std::vector<Photon> & ans, float mx_dis) const {
             NearestQueue Q;
-            FindNearestKPhotons(root, 0, internelPhotons.size(), 0, pos, K, Q);
+            FindNearestKPhotons(root, 0, internelPhotons.size(), 0, pos, K, Q, mx_dis);
             while (! Q.empty()) {
                 ans.push_back(*Q.top().p);
                 Q.pop();
@@ -133,7 +135,8 @@ namespace VCX::Labs::Rendering {
         PhotonMapping() = default;
 
         void      InitScene(Engine::Scene const * scene, const RayIntersector & intersector, bool useDirect, int nEmittedPhotons = 300000, float P_RR = 0.7f);
-        glm::vec3 CollatePhotons(const RayHit & rayHit, const glm::vec3 & out_dir, int numPhotons = 600) const;
+        void      InitCaustic(Engine::Scene const * scene, const RayIntersector & intersector, int nEmittedPhotons = 300000, float P_RR = 0.7f);
+        glm::vec3 CollatePhotons(const RayHit & rayHit, const glm::vec3 & out_dir, int numPhotons = 600, float mx_dis = -1) const;
     };
 
 } // namespace VCX::Labs::Rendering
