@@ -55,6 +55,12 @@ namespace VCX::Labs::Rendering {
         return res;
     }
 
+    float schlick(float cosine, float ref_idx) {
+        float r0 = (1 - ref_idx) / (1 + ref_idx);
+        r0       = r0 * r0;
+        return r0 + (1 - r0) * pow((1 - cosine), 5);
+    }
+
     RayReflect DirectionFromBSDF(const Ray & ray, const RayHit & rayHit) {
         assert(rayHit.IntersectState);
         static std::mt19937                   e;
@@ -89,12 +95,21 @@ namespace VCX::Labs::Rendering {
                 ior    = 1.0f / ior;
                 normal = -n;
             }
-            float     cosi  = glm::dot(-ray.Direction, normal);
-            float     cost2 = 1.0f - ior * ior * (1.0f - cosi * cosi);
-            glm::vec3 t     = ray.Direction * ior + normal * (ior * cosi - sqrt(fabs(cost2)));
-            res.Type        = ReflectType::Refraction;
-            res.Direction   = cost2 > 0 ? t : glm::vec3(0.0f);
-            res.Attenuation = tr;
+            float cosi         = glm::dot(-ray.Direction, normal);
+            float cost2 = 1.0f - ior * ior * (1.0f - cosi * cosi);
+            float reflect_prob = 0.0f;
+            if(ior < 1.0f)
+                reflect_prob = cost2 <= 0.0f ? 1.0f : schlick(cosi, ior);
+            if (uni01(e) <= reflect_prob) {
+                res.Type        = ReflectType::Specular;
+                res.Direction   = ray.Direction - glm::vec3(2.0f) * normal * glm::dot(n, ray.Direction);
+                res.Attenuation = glm::vec3(1.0f);
+            } else {
+                glm::vec3 t     = ray.Direction * ior + normal * (ior * cosi - sqrt(fabs(cost2)));
+                res.Type        = ReflectType::Refraction;
+                res.Direction   = t;
+                res.Attenuation = tr;
+            }
         } else {
             res.Type = ReflectType::None;
         }
