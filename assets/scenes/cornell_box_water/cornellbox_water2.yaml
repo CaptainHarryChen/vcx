@@ -2,24 +2,28 @@ Reflection: Empirical
 AmbientIntensity: [0.05, 0.05, 0.05]
 
 Cameras:
-  - Eye: [0, 0.9, 4]
-    Target: [0, 0.55, 0]
+  - Eye: [0, 1.5, 4]
+    Target: [0, 0.9, 0]
     Up: [0, 1, 0]
     Fovy: 39.3076481
     ZNear: 0.01
     ZFar: 10
 
 Lights:
-  - Type: Area
-    Position: [0.23, 1.98, -0.22]
-    Position2: [0.23, 1.98, 0.16]
-    Position3: [-0.24, 1.98, 0.16]
-    Intensity: [1, 1, 1]
-  - Type: Area
-    Position: [-0.24, 1.98, 0.16]
-    Position2: [-0.24, 1.98, -0.22]
-    Position3: [0.23, 1.98, -0.22]
-    Intensity: [1, 1, 1]
+  - Type: Point
+    Position: [0, 1.88, 0]
+    Intensity: [10, 10, 3]
+  
+#  - Type: Area
+#    Position: [0.23, 1.98, -0.22]
+#    Position2: [0.23, 1.98, 0.16]
+#    Position3: [-0.24, 1.98, 0.16]
+#    Intensity: [1.5, 1.5, 1.5]
+#  - Type: Area
+#    Position: [-0.24, 1.98, 0.16]
+#    Position2: [-0.24, 1.98, -0.22]
+#    Position3: [0.23, 1.98, -0.22]
+#    Intensity: [1.5, 1.5, 1.5]
     
 
 ComplexModels:

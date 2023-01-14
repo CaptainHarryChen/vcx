@@ -2,7 +2,7 @@
 
 namespace VCX::Labs::Rendering {
 
-    static glm::vec3 RayTrace(const PhotonMapping & globalPhotonMapping, const PhotonMapping & causticPhotonMapping, const RayIntersector & intersector, Ray ray, int maxDepth, bool enableShadow, int numNearPhoton) {
+    static glm::vec3 RayTrace(const PhotonMapping & globalPhotonMapping, const PhotonMapping & causticPhotonMapping, const RayIntersector & intersector, Ray ray, int maxDepth, bool enableShadow, int numNearPhoton, int causticNumNearPhoton) {
         glm::vec3 color(0.0f);
         glm::vec3 weight(1.0f);
 
@@ -17,7 +17,7 @@ namespace VCX::Labs::Rendering {
                 break;
             }
             RayReflect rayReflect = DirectionFromBSDF(ray, rayHit);
-            if(rayReflect.Type == ReflectType::Set)
+            if (rayReflect.Type == ReflectType::Set)
                 return rayReflect.Attenuation;
             weight *= rayReflect.Attenuation;
             ray.Origin    = rayHit.IntersectPosition;
@@ -30,8 +30,8 @@ namespace VCX::Labs::Rendering {
         // culculate indirect light
         if (isDiffuse) {
             // caustic
-            color += weight * causticPhotonMapping.CollatePhotons(rayHit, -ray.Direction, 50, 10.0f);
-            // indirect diffuse 
+            color += weight * causticPhotonMapping.CollatePhotons(rayHit, -ray.Direction, causticNumNearPhoton, 10.0f);
+            // indirect diffuse
             color += weight * globalPhotonMapping.CollatePhotons(rayHit, -ray.Direction, numNearPhoton);
         }
 
@@ -44,6 +44,73 @@ namespace VCX::Labs::Rendering {
     }
 
     CaseCaustic::~CaseCaustic() {
+    }
+
+    void CaseCaustic::OnSetupPropsUI() {
+        if (ImGui::BeginCombo("Scene", GetSceneName(_sceneIdx))) {
+            for (std::size_t i = 0; i < _scenes.size(); ++i) {
+                bool selected = i == _sceneIdx;
+                if (ImGui::Selectable(GetSceneName(i), selected)) {
+                    if (! selected) {
+                        _sceneIdx   = i;
+                        _sceneDirty = true;
+                        _treeDirty  = true;
+                        _resetDirty = true;
+                        _onInit     = false;
+                        _stopFlag   = true;
+                        if (_task.joinable()) _task.join();
+                        _photonProgress = 0.0f;
+                    }
+                }
+            }
+            ImGui::EndCombo();
+        }
+        if (ImGui::Button("Reset Scene")) _resetDirty = true;
+        if (ImGui::Button("Initialize")) {
+            if (_treeDirty)
+                _onInit = true;
+        }
+        ImGui::ProgressBar(_photonProgress);
+        if (_task.joinable()) {
+            if (_onInit) {
+                if (ImGui::Button("Stop")) {
+                    _onInit = false;
+                    if (_task.joinable()) _task.join();
+                    _treeDirty = true;
+                }
+            } else {
+                if (ImGui::Button("Stop")) {
+                    _stopFlag = true;
+                    if (_task.joinable()) _task.join();
+                }
+            }
+        } else if (ImGui::Button("Start Rendering")) {
+            if (! _treeDirty)
+                _stopFlag = false;
+        }
+        ImGui::ProgressBar(float(_pixelIndex) / (_buffer.GetSizeX() * _buffer.GetSizeY()));
+        Common::ImGuiHelper::SaveImage(_texture, GetBufferSize(), true);
+        ImGui::Spacing();
+
+        if (ImGui::CollapsingHeader("Appearance", ImGuiTreeNodeFlags_DefaultOpen)) {
+            bool tmp = false;
+            tmp |= ImGui::SliderInt("Photon per Light", &_photonPerLight, 100000, 1000000);
+            tmp |= ImGui::SliderInt("Caustic Photons", &_causticPhotonPerLight, 500000, 10000000);
+            _resetDirty |= tmp;
+            _treeDirty |= tmp;
+            _resetDirty |= ImGui::SliderInt("Nearest K Photon", &_numNearPhoton, 1, 1000);
+            _resetDirty |= ImGui::SliderInt("Caustic Nearest K", &_causticNumNearPhoton, 1, 100);
+            _resetDirty |= ImGui::SliderInt("Sample Rate", &_superSampleRate, 1, 5);
+            _resetDirty |= ImGui::SliderInt("Max Depth", &_maximumDepth, 1, 15);
+            _resetDirty |= ImGui::SliderFloat("Gamma", &_gamma, 1.0f, 10.0f);
+            _resetDirty |= ImGui::Checkbox("Shadow Ray", &_enableShadow);
+        }
+        ImGui::Spacing();
+
+        if (ImGui::CollapsingHeader("Control")) {
+            ImGui::Checkbox("Zoom Tooltip", &_enableZoom);
+        }
+        ImGui::Spacing();
     }
 
     Common::CaseRenderResult CaseCaustic::OnRender(std::pair<std::uint32_t, std::uint32_t> const desiredSize) {
@@ -89,9 +156,14 @@ namespace VCX::Labs::Rendering {
                 if (_pixelIndex == 0 && _treeDirty) {
                     Engine::Scene const & scene = GetScene(_sceneIdx);
                     _intersector.InitScene(&scene);
-                    _globalPhotonMapping.InitScene(&scene, _intersector, false);
-                    _causticPhotonMapping.InitCaustic(&scene, _intersector);
+                    _globalPhotonMapping.onInit   = &_onInit;
+                    _globalPhotonMapping.progress = &_photonProgress;
+                    _globalPhotonMapping.InitScene(&scene, _intersector, false, _photonPerLight);
+                    _causticPhotonMapping.progress = &_photonProgress;
+                    _causticPhotonMapping.onInit   = &_onInit;
+                    _causticPhotonMapping.InitCaustic(&scene, _intersector, _causticPhotonPerLight);
 
+                    if (! _onInit) return;
                     globalPhoton_pos.clear();
                     for (const auto & p : _globalPhotonMapping.photons)
                         globalPhoton_pos.push_back(p.Origin);
@@ -142,7 +214,7 @@ namespace VCX::Labs::Rendering {
                             lookDir += fovFactor * (2.0f * (j + dj) / height - 1.0f) * upDir;
                             lookDir += fovFactor * aspect * (2.0f * (i + di) / width - 1.0f) * rightDir;
                             Ray       initialRay(camera.Eye, glm::normalize(lookDir));
-                            glm::vec3 res = RayTrace(_globalPhotonMapping, _causticPhotonMapping, _intersector, initialRay, _maximumDepth, _enableShadow, _numNearPhoton);
+                            glm::vec3 res = RayTrace(_globalPhotonMapping, _causticPhotonMapping, _intersector, initialRay, _maximumDepth, _enableShadow, _numNearPhoton, _causticNumNearPhoton);
                             sum += glm::pow(res, glm::vec3(1.0 / _gamma));
                         }
                     _buffer.At(i, j) = sum / glm::vec3(_superSampleRate * _superSampleRate);

@@ -85,7 +85,9 @@ namespace VCX::Labs::Rendering {
                 if (_pixelIndex == 0 && _treeDirty) {
                     Engine::Scene const & scene = GetScene(_sceneIdx);
                     _intersector.InitScene(&scene);
-                    _photonmapping.InitScene(&scene, _intersector, false);
+                    _photonmapping.onInit = &_onInit;
+                    _photonmapping.progress = &_photonProgress;
+                    _photonmapping.InitScene(&scene, _intersector, false, _photonPerLight);
 
                     photon_pos.clear();
                     for (const auto & p : _photonmapping.photons)

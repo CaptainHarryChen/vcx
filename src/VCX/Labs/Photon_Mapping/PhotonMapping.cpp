@@ -34,6 +34,9 @@ namespace VCX::Labs::Rendering {
         std::uniform_real_distribution<float> uni01(0, 1);
         InternalScene = scene;
         photons.clear();
+        float perPhoton = 0.99f / InternalScene->Lights.size() / nEmittedPhotons;
+        if(progress)
+            *progress = 0.0f;
         for (const Engine::Light & light : InternalScene->Lights) {
             for (int i = 0; i < nEmittedPhotons; i++) {
                 Photon p = GeneratePhoton(light, nEmittedPhotons);
@@ -57,9 +60,13 @@ namespace VCX::Labs::Rendering {
                     Photon next_p = Photon(rayHit.IntersectPosition, rayReflect.Direction, p.Power * rayReflect.Attenuation);
                     p             = next_p;
                 }
+                *progress += perPhoton;
+                if(onInit && !*onInit)
+                    return;
             }
         }
         tree.Build(photons);
+        *progress = 1.0f;
         // debug
         // glm::vec3 sum(0.0f);
         // for(auto &p : photons) {
@@ -83,6 +90,9 @@ namespace VCX::Labs::Rendering {
         std::uniform_real_distribution<float> uni01(0, 1);
         InternalScene = scene;
         photons.clear();
+        float perPhoton = 0.99f / InternalScene->Lights.size() / nEmittedPhotons;
+        if(progress)
+            *progress = 0.0f;
         for (const Engine::Light & light : InternalScene->Lights) {
             for (int i = 0; i < nEmittedPhotons; i++) {
                 Photon p = GeneratePhoton(light, nEmittedPhotons);
@@ -108,9 +118,13 @@ namespace VCX::Labs::Rendering {
                     Photon next_p = Photon(rayHit.IntersectPosition, rayReflect.Direction, p.Power * rayReflect.Attenuation);
                     p             = next_p;
                 }
+                *progress += perPhoton;
+                if(onInit && !*onInit)
+                    return;
             }
         }
         tree.Build(photons);
+        *progress = 1.0f;
     }
 
     glm::vec3 PhotonMapping::CollatePhotons(const RayHit & rayHit, const glm::vec3 & out_dir, int numPhotons, float mx_dis) const {

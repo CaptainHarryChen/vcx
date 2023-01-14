@@ -41,7 +41,7 @@ namespace VCX::Labs::Rendering {
 
         static const int    nDims = 3;
         std::vector<Photon> internelPhotons;
-        Node *              root             = nullptr;
+        Node *              root = nullptr;
 
         void BuildTree(Node *& u, int L, int R, int dep) {
             if (L >= R)
@@ -63,7 +63,7 @@ namespace VCX::Labs::Rendering {
         void CheckAndAdd(const glm::vec3 & pos, Photon * p, int K, NearestQueue & Q, float mx_dis) const {
             if (Q.size() < K) {
                 float dis2 = glm::dot(pos - p->Origin, pos - p->Origin);
-                if(mx_dis < 0 || dis2 <= mx_dis * mx_dis)
+                if (mx_dis < 0 || dis2 <= mx_dis * mx_dis)
                     Q.push(disNode(dis2, p));
                 return;
             }
@@ -131,6 +131,9 @@ namespace VCX::Labs::Rendering {
         Engine::Scene const * InternalScene = nullptr;
         std::vector<Photon>   photons;
         kDTree                tree;
+
+        float * progress = nullptr;
+        bool *  onInit   = nullptr;
 
         PhotonMapping() = default;
 
