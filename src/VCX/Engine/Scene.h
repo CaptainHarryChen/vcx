@@ -91,7 +91,7 @@ namespace VCX::Engine {
         Texture2D<Formats::RGBA8> MetaSpec { 1, 1 };
         Texture2D<Formats::R8>    Height { 1, 1 };
         float                     Ior = 1.0f;
-        glm::vec3                 Trans;
+        glm::vec3                 Trans { 1, 1, 1 };
     };
 
     struct Model {

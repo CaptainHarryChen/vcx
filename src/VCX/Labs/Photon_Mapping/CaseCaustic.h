@@ -24,11 +24,15 @@ namespace VCX::Labs::Rendering {
         std::vector<glm::vec3> & globalPhoton_pos = photon_pos;
         std::vector<glm::vec3>   causticPhoton_pos;
 
+        int              _causticPhotonPerLight { 1000000 };
+        int              _causticNumNearPhoton { 50 };
+
     public:
         CaseCaustic(const std::initializer_list<Assets::ExampleScene> & scenes);
         ~CaseCaustic();
 
         virtual std::string_view const   GetName() override { return "Caustic Photon Mapping"; }
+        virtual void                     OnSetupPropsUI() override;
         virtual Common::CaseRenderResult OnRender(std::pair<std::uint32_t, std::uint32_t> const desiredSize) override;
     };
 } // namespace VCX::Labs::Rendering

@@ -17,7 +17,7 @@ namespace VCX::Labs::Rendering {
                 break;
             }
             RayReflect rayReflect = DirectionFromBSDF(ray, rayHit);
-            if(rayReflect.Type == ReflectType::Set)
+            if (rayReflect.Type == ReflectType::Set)
                 return rayReflect.Attenuation;
             weight *= rayReflect.Attenuation;
             ray.Origin    = rayHit.IntersectPosition;
@@ -54,10 +54,14 @@ namespace VCX::Labs::Rendering {
                 bool selected = i == _sceneIdx;
                 if (ImGui::Selectable(GetSceneName(i), selected)) {
                     if (! selected) {
-                        _sceneIdx   = i;
-                        _sceneDirty = true;
-                        _treeDirty  = true;
-                        _resetDirty = true;
+                        _sceneIdx       = i;
+                        _sceneDirty     = true;
+                        _treeDirty      = true;
+                        _resetDirty     = true;
+                        _onInit         = false;
+                        _stopFlag       = true;
+                        if(_task.joinable()) _task.join();
+                        _photonProgress = 0.0f;
                     }
                 }
             }
@@ -68,11 +72,19 @@ namespace VCX::Labs::Rendering {
             if (_treeDirty)
                 _onInit = true;
         }
-        ImGui::ProgressBar(_treeDirty ? 0.0f : 1.0f);
+        ImGui::ProgressBar(_photonProgress);
         if (_task.joinable()) {
-            if (ImGui::Button("Stop Rendering")) {
-                _stopFlag = true;
-                if (_task.joinable()) _task.join();
+            if (_onInit) {
+                if (ImGui::Button("Stop")) {
+                    _onInit = false;
+                    if (_task.joinable()) _task.join();
+                    _treeDirty = true;
+                }
+            } else {
+                if (ImGui::Button("Stop")) {
+                    _stopFlag = true;
+                    if (_task.joinable()) _task.join();
+                }
             }
         } else if (ImGui::Button("Start Rendering")) {
             if (! _treeDirty)
@@ -142,8 +154,10 @@ namespace VCX::Labs::Rendering {
                 if (_pixelIndex == 0 && _treeDirty) {
                     Engine::Scene const & scene = GetScene(_sceneIdx);
                     _intersector.InitScene(&scene);
+                    _photonmapping.onInit = &_onInit;
+                    _photonmapping.progress = &_photonProgress;
                     _photonmapping.InitScene(&scene, _intersector, true, _photonPerLight);
-
+                    if(!_onInit) return;
                     photon_pos.clear();
                     for (const auto & p : _photonmapping.photons)
                         photon_pos.push_back(p.Origin);

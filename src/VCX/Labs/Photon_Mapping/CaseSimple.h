@@ -42,6 +42,7 @@ namespace VCX::Labs::Rendering {
         int              _maximumDepth { 30 };
         int              _photonPerLight { 100000 };
         int              _numNearPhoton { 200 };
+        float            _photonProgress { 0.0f };
         int              _superSampleRate { 1 };
         std::size_t      _pixelIndex { 0 };
         bool             _onInit { false };
