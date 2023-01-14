@@ -7,6 +7,7 @@ namespace VCX::Labs::Rendering {
         std::uniform_real_distribution<float> uni01(0, 1);
         Photon                                p;
         Ray                                   ray;
+        // float magic = 2.0f;
         if (light.Type == Engine::LightType::Point) {
             p.Origin    = light.Position;
             p.Direction = RandomDirection();
@@ -21,9 +22,10 @@ namespace VCX::Labs::Rendering {
             if (u + v > 1.0f)
                 u = 1 - u, v = 1 - v;
             p.Origin    = (1 - u - v) * light.Position + u * light.Position2 + v * light.Position3;
-            p.Direction = RandomHemiDirection(normal);
-            p.Power     = light.Intensity / glm::vec3(totalNum) * glm::dot(normal, p.Direction) * 2.0f;
+            p.Direction = RandomCosineDirection(normal, glm::normalize(light.Position2 - light.Position));
+            p.Power     = light.Intensity / glm::vec3(totalNum);
         }
+        // p.Power *= magic;
         return p;
     }
 

@@ -4,11 +4,19 @@
 namespace VCX::Labs::Rendering {
     using namespace Assets;
 
+    const static std::initializer_list<ExampleScene> & scenes = {
+        ExampleScene::Floor,
+        ExampleScene::CornellBox,
+        ExampleScene::CornellBoxSphere,
+        ExampleScene::CornellBoxMirror,
+        ExampleScene::CornellBoxWater
+    };
+
     App::App():
         _ui(Labs::Common::UIOptions {}),
-        _caseSimple({ ExampleScene::Floor, ExampleScene::CornellBox, ExampleScene::CornellBoxSphere, ExampleScene::SportsCar, ExampleScene::BreakfastRoom, ExampleScene::Sibenik, ExampleScene::Sponza }),
-        _caseSepDirect({ ExampleScene::Floor, ExampleScene::CornellBox, ExampleScene::CornellBoxSphere, ExampleScene::SportsCar, ExampleScene::BreakfastRoom, ExampleScene::Sibenik, ExampleScene::Sponza }),
-        _caseCaustic({ ExampleScene::Floor, ExampleScene::CornellBox, ExampleScene::CornellBoxSphere, ExampleScene::SportsCar, ExampleScene::BreakfastRoom, ExampleScene::Sibenik, ExampleScene::Sponza }) {
+        _caseSimple(scenes),
+        _caseSepDirect(scenes),
+        _caseCaustic(scenes) {
     }
 
     void App::OnFrame() {

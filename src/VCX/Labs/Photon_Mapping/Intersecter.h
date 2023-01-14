@@ -339,6 +339,7 @@ namespace VCX::Labs::Rendering {
 
     glm::vec3 RandomDirection();
     glm::vec3 RandomHemiDirection(const glm::vec3 & normal);
+    glm::vec3 RandomCosineDirection(const glm::vec3 & n, const glm::vec3 &lx);
 
     RayReflect DirectionFromBSDF(const Ray & ray, const RayHit & rayHit);
     glm::vec3  DirectLight(const RayIntersector & intersector, const Ray & ray, const RayHit & rayHit, bool enableShadow);
