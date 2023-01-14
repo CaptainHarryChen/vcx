@@ -1,0 +1,28 @@
+Reflection: Empirical
+AmbientIntensity: [0.05, 0.05, 0.05]
+
+Cameras:
+  - Eye: [2, 5, 5]
+    Target: [2, 1, 1]
+    Up: [0, 1, 0]
+    Fovy: 39.3076481
+    ZNear: 0.01
+    ZFar: 100
+
+Lights:
+#  - Type: Point
+#    Position: [-1.9, 0.1, 1.98]
+#    Intensity: [10, 10, 10]
+  - Type: Area
+    Position: [-1.98, 0.3, 1.93]
+    Position2: [-1.98, 1.7, 1.93]
+    Position3: [-1.98, 1.7, 1.97]
+    Intensity: [100, 100, 100]
+  - Type: Area
+    Position: [-1.98, 1.7, 1.97]
+    Position2: [-1.98, 0.3, 1.97]
+    Position3: [-1.98, 0.3, 1.93]
+    Intensity: [100, 100, 100]
+
+ComplexModels:
+  - Mesh: triangular_prism.obj

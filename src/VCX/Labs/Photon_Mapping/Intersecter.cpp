@@ -112,7 +112,7 @@ namespace VCX::Labs::Rendering {
             float cosi         = glm::dot(-ray.Direction, normal);
             float cost2        = 1.0f - ior * ior * (1.0f - cosi * cosi);
             float reflect_prob = 0.0f;
-            if (ior < 1.0f)
+            if (rayHit.IntersectMode != Engine::BlendMode::TransparentNoReflect && ior < 1.0f)
                 reflect_prob = cost2 <= 0.0f ? 1.0f : schlick(cosi, ior);
             if (uni01(e) <= reflect_prob) {
                 res.Type        = ReflectType::Specular;

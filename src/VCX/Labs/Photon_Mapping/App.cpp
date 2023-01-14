@@ -9,7 +9,8 @@ namespace VCX::Labs::Rendering {
         ExampleScene::CornellBox,
         ExampleScene::CornellBoxSphere,
         ExampleScene::CornellBoxMirror,
-        ExampleScene::CornellBoxWater
+        ExampleScene::CornellBoxWater,
+        ExampleScene::TriangularPrism
     };
 
     App::App():
