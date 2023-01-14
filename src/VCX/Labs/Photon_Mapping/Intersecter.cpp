@@ -55,6 +55,17 @@ namespace VCX::Labs::Rendering {
         return res;
     }
 
+    glm::vec3 RandomCosineDirection(const glm::vec3 & n, const glm::vec3 &lx) {
+        static std::mt19937                   e;
+        std::uniform_real_distribution<float> uni(0, 1);
+        float phi = uni(e) * 2.0f * glm::pi<float>();
+        float theta = uni(e) * glm::asin(uni(e));
+        glm::vec3 dir = glm::vec3(cos(phi) * sin(theta), cos(theta), sin(phi) * sin(theta));
+        glm::vec3 lz = glm::normalize(glm::cross(n, lx));
+        glm::vec3 res = glm::normalize(dir[0] * lx + dir[1] * n + dir[2] * lz);
+        return res;
+    }
+
     float schlick(float cosine, float ref_idx) {
         float r0 = (1 - ref_idx) / (1 + ref_idx);
         r0       = r0 * r0;
