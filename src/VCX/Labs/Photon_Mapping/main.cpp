@@ -4,7 +4,7 @@
 int main() {
     using namespace VCX;
     return Engine::RunApp<Labs::Rendering::App>(Engine::AppContextOptions {
-        .Title      = "VCX Labs 3: Rendering",
+        .Title      = "Photon Mapping",
         .WindowSize = { 1024, 768 },
         .FontSize   = 16,
 

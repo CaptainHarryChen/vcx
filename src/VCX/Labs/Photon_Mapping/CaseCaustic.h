@@ -26,6 +26,7 @@ namespace VCX::Labs::Rendering {
 
         int              _causticPhotonPerLight { 1000000 };
         int              _causticNumNearPhoton { 50 };
+        float            _causticMaxDis        { 0.05 };
 
     public:
         CaseCaustic(const std::initializer_list<Assets::ExampleScene> & scenes);
