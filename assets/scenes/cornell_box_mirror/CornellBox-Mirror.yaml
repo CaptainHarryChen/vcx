@@ -2,8 +2,8 @@ Reflection: Empirical
 AmbientIntensity: [0.05, 0.05, 0.05]
 
 Cameras:
-  - Eye: [0, 1.2, 3.5]
-    Target: [0, 0.75, 0]
+  - Eye: [0, 1.2, 3.8]
+    Target: [0, 0.8, 0]
     Up: [0, 1, 0]
     Fovy: 39.3076481
     ZNear: 0.01

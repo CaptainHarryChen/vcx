@@ -132,6 +132,69 @@ namespace VCX::Labs::Rendering {
         return res;
     }
 
+    RayReflect DirectionFromBSDF_Dispersion(const Ray & ray, const RayHit & rayHit, int rgb) {
+        assert(rayHit.IntersectState);
+        static std::mt19937                   e;
+        std::uniform_real_distribution<float> uni01(0, 1);
+
+        float     alpha     = rayHit.IntersectAlbedo.w;
+        float     shininess = rayHit.IntersectMetaSpec.w;
+        glm::vec3 n         = rayHit.IntersectNormal;
+        glm::vec3 ks        = rayHit.IntersectMetaSpec;
+        glm::vec3 kd        = rayHit.IntersectAlbedo;
+        float     Ior       = rayHit.IntersectIor;
+        glm::vec3 tr        = rayHit.IntersectTrans;
+
+        RayReflect res;
+        if (rayHit.IntersectMode == Engine::BlendMode::ColorOnly) {
+            res.Type        = ReflectType::Set;
+            res.Attenuation = kd;
+        } else if (rayHit.IntersectMode == Engine::BlendMode::Phong) {
+            res.Type            = ReflectType::Diffuse;
+            glm::vec3 dir       = RandomHemiDirection(n);
+            glm::vec3 h         = glm::normalize(-ray.Direction + dir);
+            float     spec_coef = glm::pow(glm::max(glm::dot(h, n), 0.0f), shininess);
+            float     diff_coef = glm::max(glm::dot(dir, n), 0.0f);
+            res.Attenuation     = (diff_coef * kd + spec_coef * ks) * 2.0f; // probability density is 1/2pi, but the bsdf has a 1/pi
+            res.Direction       = dir;
+        } else if (rayHit.IntersectMode == Engine::BlendMode::Reflect || rayHit.IntersectMode == Engine::BlendMode::ReflectNoFresnel) {
+            res.Type        = ReflectType::Specular;
+            res.Direction   = ray.Direction - glm::vec3(2.0f) * n * glm::dot(n, ray.Direction);
+            res.Attenuation = ks;
+        } else if (rayHit.IntersectMode == Engine::BlendMode::Transparent || rayHit.IntersectMode == Engine::BlendMode::TransparentGlass || rayHit.IntersectMode == Engine::BlendMode::TransparentNoFresnel || rayHit.IntersectMode == Engine::BlendMode::TransparentNoReflect) {
+            if(rgb == 0)
+                Ior *= 0.8;
+            else if(rgb == 2)
+                Ior *= 1.5;
+            float     ior    = 1.0f / Ior;
+            glm::vec3 normal = n;
+            if (glm::dot(ray.Direction, n) > 0.f) {
+                ior    = 1.0f / ior;
+                normal = -n;
+            }
+            float cosi         = glm::dot(-ray.Direction, normal);
+            float cost2        = 1.0f - ior * ior * (1.0f - cosi * cosi);
+            float reflect_prob = 0.0f;
+            if (rayHit.IntersectMode != Engine::BlendMode::TransparentNoReflect && ior < 1.0f)
+                reflect_prob = cost2 <= 0.0f ? 1.0f : schlick(cosi, ior);
+            if (uni01(e) <= reflect_prob) {
+                res.Type        = ReflectType::Specular;
+                res.Direction   = ray.Direction - glm::vec3(2.0f) * normal * glm::dot(n, ray.Direction);
+                res.Attenuation = glm::vec3(1.0f);
+            } else {
+                glm::vec3 t     = ray.Direction * ior + normal * (ior * cosi - sqrt(fabs(cost2)));
+                res.Type        = ReflectType::Refraction;
+                res.Direction   = t;
+                res.Attenuation = tr;
+            }
+        } else {
+            res.Type = ReflectType::None;
+        }
+        // if(res.Attenuation[0] > 3.0f || res.Attenuation[1] > 3.0f || res.Attenuation[2] > 3.0f)
+        //     printf("abnormal attenuation: (%f, %f, %f)\n",res.Attenuation.x, res.Attenuation.y, res.Attenuation.z);
+        return res;
+    }
+
     glm::vec3 DirectLight(const RayIntersector & intersector, const Ray & ray, const RayHit & rayHit, bool enableShadow) {
         static std::mt19937                   rand_e;
         std::uniform_real_distribution<float> uni01(0, 1);

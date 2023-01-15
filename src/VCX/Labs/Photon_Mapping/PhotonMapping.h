@@ -90,6 +90,8 @@ namespace VCX::Labs::Rendering {
             CheckAndAdd(pos, u->p, K, Q, mx_dis);
             float mx   = Q.empty() ? mx_dis : Q.top().dis;
             float dis2 = (u->p->Origin[axis] - pos[axis]) * (u->p->Origin[axis] - pos[axis]);
+            if(dis2 > mx_dis * mx_dis)
+                return;
             if (Q.size() < K || mx >= dis2) {
                 if (pos[axis] > u->p->Origin[axis])
                     FindNearestKPhotons(u->son[0], L, mid, dep + 1, pos, K, Q, mx_dis);
@@ -140,6 +142,7 @@ namespace VCX::Labs::Rendering {
         Photon    GeneratePhoton(Engine::Light light, int totalNum);
         void      InitScene(Engine::Scene const * scene, const RayIntersector & intersector, bool useDirect, int nEmittedPhotons = 300000, float P_RR = 0.7f);
         void      InitCaustic(Engine::Scene const * scene, const RayIntersector & intersector, int nEmittedPhotons = 300000, float P_RR = 0.7f);
+        void      InitCausticDispersion(Engine::Scene const * scene, const RayIntersector & intersector, int nEmittedPhotons = 300000, float P_RR = 0.7f);
         glm::vec3 CollatePhotons(const RayHit & rayHit, const glm::vec3 & out_dir, int numPhotons = 600, float mx_dis = -1) const;
     };
 

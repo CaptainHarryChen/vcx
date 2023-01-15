@@ -17,7 +17,8 @@ namespace VCX::Labs::Rendering {
         _ui(Labs::Common::UIOptions {}),
         _caseSimple(scenes),
         _caseSepDirect(scenes),
-        _caseCaustic(scenes) {
+        _caseCaustic(scenes),
+        _caseRainbow({ExampleScene::TriangularPrism}) {
     }
 
     void App::OnFrame() {
