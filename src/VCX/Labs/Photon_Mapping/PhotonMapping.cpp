@@ -16,7 +16,7 @@ namespace VCX::Labs::Rendering {
             // Todo
         } else if (light.Type == Engine::LightType::Area) {
             glm::vec3 normal = glm::cross(light.Position2 - light.Position, light.Position3 - light.Position);
-            float area = glm::length(normal);
+            float     area   = glm::length(normal);
             normal           = glm::normalize(normal);
             float u = uni01(rand_e), v = uni01(rand_e);
             if (u + v > 1.0f)
@@ -35,7 +35,7 @@ namespace VCX::Labs::Rendering {
         InternalScene = scene;
         photons.clear();
         float perPhoton = 0.99f / InternalScene->Lights.size() / nEmittedPhotons;
-        if(progress)
+        if (progress)
             *progress = 0.0f;
         for (const Engine::Light & light : InternalScene->Lights) {
             for (int i = 0; i < nEmittedPhotons; i++) {
@@ -48,20 +48,19 @@ namespace VCX::Labs::Rendering {
                     if (! rayHit.IntersectState) // No intersection
                         break;
                     RayReflect rayReflect = DirectionFromBSDF(ray, rayHit);
-                    if (rayReflect.Type == ReflectType::None) // Don't need reflection or refraction
-                        break;
                     if (rayReflect.Type == ReflectType::Diffuse) {
                         if (useDirect || isIndirect)
                             photons.emplace_back(rayHit.IntersectPosition, p.Direction, p.Power);
                         isIndirect = true;
-                    }
+                    } else // Don't need reflection or refraction
+                        break;
                     if (uni01(rand_e) > P_RR) // Russian Roulette: stop
                         break;
                     Photon next_p = Photon(rayHit.IntersectPosition, rayReflect.Direction, p.Power * rayReflect.Attenuation);
                     p             = next_p;
                 }
                 *progress += perPhoton;
-                if(onInit && !*onInit)
+                if (onInit && ! *onInit)
                     return;
             }
         }
@@ -91,35 +90,34 @@ namespace VCX::Labs::Rendering {
         InternalScene = scene;
         photons.clear();
         float perPhoton = 0.99f / InternalScene->Lights.size() / nEmittedPhotons;
-        if(progress)
+        if (progress)
             *progress = 0.0f;
         for (const Engine::Light & light : InternalScene->Lights) {
             for (int i = 0; i < nEmittedPhotons; i++) {
                 Photon p = GeneratePhoton(light, nEmittedPhotons);
                 Ray    ray;
-                bool isCaustic = false;
+                bool   isCaustic = false;
                 while (true) {
                     ray           = Ray(p.Origin, p.Direction);
                     RayHit rayHit = intersector.IntersectRay(ray);
                     if (! rayHit.IntersectState) // No intersection
                         break;
                     RayReflect rayReflect = DirectionFromBSDF(ray, rayHit);
-                    if (rayReflect.Type == ReflectType::None) // Don't need reflection or refraction
-                        break;
                     if (rayReflect.Type == ReflectType::Specular || rayReflect.Type == ReflectType::Refraction)
                         isCaustic = true;
-                    if (rayReflect.Type == ReflectType::Diffuse) {
+                    else if (rayReflect.Type == ReflectType::Diffuse) {
                         if (isCaustic)
                             photons.emplace_back(rayHit.IntersectPosition, p.Direction, p.Power);
                         break;
-                    }
+                    } else // Don't need reflection or refraction
+                        break;
                     if (uni01(rand_e) > P_RR) // Russian Roulette: stop
                         break;
                     Photon next_p = Photon(rayHit.IntersectPosition, rayReflect.Direction, p.Power * rayReflect.Attenuation);
                     p             = next_p;
                 }
                 *progress += perPhoton;
-                if(onInit && !*onInit)
+                if (onInit && ! *onInit)
                     return;
             }
         }
@@ -133,19 +131,19 @@ namespace VCX::Labs::Rendering {
         InternalScene = scene;
         photons.clear();
         float perPhoton = 0.99f / InternalScene->Lights.size() / nEmittedPhotons;
-        if(progress)
+        if (progress)
             *progress = 0.0f;
         float magic = 5.0f;
         for (const Engine::Light & light : InternalScene->Lights) {
             for (int i = 0; i < nEmittedPhotons; i++) {
                 Photon p = GeneratePhoton(light, nEmittedPhotons);
-                for(int k = 0; k < 3; k++)
-                    if(i % 3 != k)
+                for (int k = 0; k < 3; k++)
+                    if (i % 3 != k)
                         p.Power[k] = 0.0f;
                     else
                         p.Power[k] *= 3.0f;
                 p.Power *= magic;
-                Ray    ray;
+                Ray  ray;
                 bool isCaustic = false;
                 while (true) {
                     ray           = Ray(p.Origin, p.Direction);
@@ -153,22 +151,21 @@ namespace VCX::Labs::Rendering {
                     if (! rayHit.IntersectState) // No intersection
                         break;
                     RayReflect rayReflect = DirectionFromBSDF_Dispersion(ray, rayHit, i % 3);
-                    if (rayReflect.Type == ReflectType::None) // Don't need reflection or refraction
-                        break;
                     if (rayReflect.Type == ReflectType::Specular || rayReflect.Type == ReflectType::Refraction)
                         isCaustic = true;
-                    if (rayReflect.Type == ReflectType::Diffuse) {
+                    else if (rayReflect.Type == ReflectType::Diffuse) {
                         if (isCaustic)
                             photons.emplace_back(rayHit.IntersectPosition, p.Direction, p.Power);
                         break;
-                    }
+                    } else // Don't need reflection or refraction
+                        break;
                     if (uni01(rand_e) > P_RR) // Russian Roulette: stop
                         break;
                     Photon next_p = Photon(rayHit.IntersectPosition, rayReflect.Direction, p.Power * rayReflect.Attenuation);
                     p             = next_p;
                 }
                 *progress += perPhoton;
-                if(onInit && !*onInit)
+                if (onInit && ! *onInit)
                     return;
             }
         }

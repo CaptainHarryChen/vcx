@@ -2,7 +2,7 @@
 
 namespace VCX::Labs::Rendering {
 
-    static glm::vec3 RayTrace(const PhotonMapping & globalPhotonMapping, const PhotonMapping & causticPhotonMapping, const RayIntersector & intersector, Ray ray, int maxDepth, bool enableShadow, int numNearPhoton, int causticNumNearPhoton) {
+    static glm::vec3 RayTrace(const PhotonMapping & globalPhotonMapping, const PhotonMapping & causticPhotonMapping, const RayIntersector & intersector, Ray ray, int maxDepth, bool enableShadow, int numNearPhoton, int causticNumNearPhoton, float causticMaxDis) {
         glm::vec3 color(0.0f);
         glm::vec3 weight(1.0f);
 
@@ -30,7 +30,7 @@ namespace VCX::Labs::Rendering {
         // culculate indirect light
         if (isDiffuse) {
             // caustic
-            color += weight * causticPhotonMapping.CollatePhotons(rayHit, -ray.Direction, causticNumNearPhoton, 10.0f);
+            color += weight * causticPhotonMapping.CollatePhotons(rayHit, -ray.Direction, causticNumNearPhoton, causticMaxDis);
             // indirect diffuse
             color += weight * globalPhotonMapping.CollatePhotons(rayHit, -ray.Direction, numNearPhoton);
         }
@@ -98,6 +98,7 @@ namespace VCX::Labs::Rendering {
             tmp |= ImGui::SliderInt("Caustic Photons", &_causticPhotonPerLight, 500000, 10000000);
             _resetDirty |= tmp;
             _treeDirty |= tmp;
+            _resetDirty |= ImGui::SliderFloat("Caustic Max Dis", &_causticMaxDis, 0.01f, 50.0f);
             _resetDirty |= ImGui::SliderInt("Nearest K Photon", &_numNearPhoton, 1, 1000);
             _resetDirty |= ImGui::SliderInt("Caustic Nearest K", &_causticNumNearPhoton, 1, 100);
             _resetDirty |= ImGui::SliderInt("Sample Rate", &_superSampleRate, 1, 5);
@@ -214,7 +215,7 @@ namespace VCX::Labs::Rendering {
                             lookDir += fovFactor * (2.0f * (j + dj) / height - 1.0f) * upDir;
                             lookDir += fovFactor * aspect * (2.0f * (i + di) / width - 1.0f) * rightDir;
                             Ray       initialRay(camera.Eye, glm::normalize(lookDir));
-                            glm::vec3 res = RayTrace(_globalPhotonMapping, _causticPhotonMapping, _intersector, initialRay, _maximumDepth, _enableShadow, _numNearPhoton, _causticNumNearPhoton);
+                            glm::vec3 res = RayTrace(_globalPhotonMapping, _causticPhotonMapping, _intersector, initialRay, _maximumDepth, _enableShadow, _numNearPhoton, _causticNumNearPhoton, _causticMaxDis);
                             sum += glm::pow(res, glm::vec3(1.0 / _gamma));
                         }
                     _buffer.At(i, j) = sum / glm::vec3(_superSampleRate * _superSampleRate);
